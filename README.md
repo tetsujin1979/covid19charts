@@ -10,4 +10,5 @@ In the clone directory, clone the COVID 19 Dashboard repo from https://github.co
 Run npm install to download the dependencies
 
 Register a new application at https://developer.twitter.com/en/apps
-Authanticate your account with the new applicaton, and populate the values in twitterConfiguration.js
+
+Authenticate your account with the new applicaton, and populate the values in twitterConfiguration.js
