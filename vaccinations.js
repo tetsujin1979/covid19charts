@@ -95,7 +95,7 @@ fs.readFile('./covid19dashboard/data.json', 'utf8', (err, data) => {
 });
 
 function processNewVaccinations() {
-  logger.info('Processing daily vaccinations');
+logger.info('Processing daily vaccinations');
   let labels = new Array();
   firstDose.data = new Array();
   secondDose.data = new Array();
@@ -111,17 +111,19 @@ function processNewVaccinations() {
   let dailyFirstDose = firstDose.data[firstDose.data.length - 1];
   let dailySecondDose = secondDose.data[secondDose.data.length - 1];
 
-  let totalFirstDose = graphData[graphData.length - 1].totalFirstDose;
-  let totalSecondDose = graphData[graphData.length - 1].totalSecondDose;
+  let finalEntry = graphData[graphData.length - 1];
+  let totalFirstDose = finalEntry.totalFirstDose;
+  let totalSecondDose = finalEntry.totalSecondDose;
 
   let tweet = '💉 Vaccinations: Daily doses' +
+              '\n' + moment(finalEntry.date).format('dddd, Do MMMM') + 
               '\n1st dose: ' + Number(dailyFirstDose).toLocaleString('en') +
               '\n2nd dose: ' + Number(dailySecondDose).toLocaleString('en') +
               '\nTotal daily doses: ' + Number(dailyFirstDose + dailySecondDose).toLocaleString('en') +
               '\n' +
-              '\nTotal 1st dose: ' + Number(totalFirstDose).toLocaleString('en') + '(' + graphData[graphData.length - 1].populationFirstDose + '% of population)' +
-              '\nTotal 2nd dose: ' + Number(totalSecondDose).toLocaleString('en') + '(' + graphData[graphData.length - 1].populationSecondDose + '% of population)' +
-              '\nTotal doses administered: ' + Number(totalFirstDose + totalSecondDose).toLocaleString('en') +
+              '\nTotal 1st dose: ' + Number(totalFirstDose).toLocaleString('en') + '(' + finalEntry.populationFirstDose + '% of population)' +
+              '\nTotal 2nd dose: ' + Number(totalSecondDose).toLocaleString('en') + '(' + finalEntry.populationSecondDose + '% of population)' +
+              '\nTotal doses: ' + Number(totalFirstDose + totalSecondDose).toLocaleString('en') +
               '\n' + hashtag +
               '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=vaccinations&dateSelection=lastTwoMonths&graphType=normal&displayType=graph&trendLine=false';
 
@@ -182,14 +184,15 @@ function processVaccinationsByDay(lastTweetId) {
 }
 
 function processRollingSevenDayAverage(inReplyToId) {
-logger.info('Processing seven day average vaccinations');
+  logger.info('Processing seven day average vaccinations');
   let labels = new Array();
+  let finalEntry = graphData[graphData.length - 1];
   firstDose.data = new Array();
   secondDose.data = new Array();
   populationFirstDose.data = new Array();
   populationSecondDose.data = new Array();
   let initialTestsIndex = 0;
-  let todayDay = graphData[graphData.length - 1].date.getDay();
+  let todayDay = finalEntry.date.getDay();
   for (let counter = 6; counter < 13; counter++) {
     if (graphData[counter].date.getDay() === todayDay) {
       initialTestsIndex = counter;
@@ -217,26 +220,27 @@ logger.info('Processing seven day average vaccinations');
   let sevenDayAverageSecondDose = Number(secondDose.data[firstDose.data.length - 1]);
   let sevenDayAverageTotalDose = sevenDayAverageFirstDose + sevenDayAverageSecondDose;
 
-  let firstDosesOver16Remaining = over16 - graphData[graphData.length - 1].totalFirstDose;
-  let secondDosesOver16Remaining = over16 - graphData[graphData.length - 1].totalSecondDose;
-  let estimatedDaysToTotalFirstDose = Math.ceil(firstDosesOver16Remaining / sevenDayAverageFirstDose);
-  let estimatedDaysToTotalSecondDose = Math.ceil(secondDosesOver16Remaining / sevenDayAverageSecondDose);
+  let firstDosesOver16Remaining = over16 - finalEntry.totalFirstDose;
+  let estimatedDaysToTotalFirstDose = (firstDosesOver16Remaining / sevenDayAverageFirstDose);
+
+  let secondDosesAdministered = sevenDayAverageSecondDose * estimatedDaysToTotalFirstDose;
+  let secondDosesOver16Remaining = over16 - (finalEntry.totalSecondDose + secondDosesAdministered);
+  let estimatedDaysToTotalSecondDose = Math.ceil(secondDosesOver16Remaining / sevenDayAverageTotalDose);
 
   let finalFirstDose = new Date();
-  finalFirstDose.setDate(finalFirstDose.getDate() + estimatedDaysToTotalFirstDose);
+  finalFirstDose.setDate(finalFirstDose.getDate() + Math.ceil(estimatedDaysToTotalFirstDose));
 
-  let finalSecondDose = new Date();
-  finalSecondDose.setDate(finalSecondDose.getDate() + estimatedDaysToTotalSecondDose);
+  let finalSecondDose = new Date(finalFirstDose.getTime());
+  finalSecondDose.setDate(finalSecondDose.getDate() + Math.ceil(estimatedDaysToTotalSecondDose));
 
-  let tweet = header +
-              '\n💉 Vaccinations: Rolling seven day average' +
-              '\n' + moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM') + 
+  let tweet = '💉 Vaccinations: Seven day average' +
+              '\n' + moment(finalEntry.date).format('dddd, Do MMMM') + 
               '\n1st dose: ' + Number(sevenDayAverageFirstDose).toLocaleString('en') + 
               '\n2nd dose: ' + Number(sevenDayAverageSecondDose).toLocaleString('en') + 
               '\nTotal doses: ' + Number(sevenDayAverageTotalDose).toLocaleString('en') +
               '\n' +
               '\nEstimated final vaccinations' +
-              '\n1st dose: ' + moment(finalFirstDose).format('ddd, Do MMM YYYY') + '(' + estimatedDaysToTotalFirstDose  + ' days)' +
+              '\n1st dose: ' + moment(finalFirstDose).format('ddd, Do MMM YYYY') + '(' + Math.ceil(estimatedDaysToTotalFirstDose)  + ' days)' +
               '\n2nd dose: ' + moment(finalSecondDose).format('ddd, Do MMM YYYY') + '(' + estimatedDaysToTotalSecondDose + ' days)' +
               '\n' + hashtag +
               '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=vaccinations&dateSelection=lastTwoMonths&graphType=rollingSevenDayAverage&displayType=graph&trendLine=false';
