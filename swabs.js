@@ -104,7 +104,7 @@ function processNewSwabs() {
             '\n' +
             '\nYesterday\'s results(change)' +
             '\nPositive: ' + previousPositiveSwabs.toLocaleString('en') + '(' + (positiveDifference > 0 ? '+' : '') + positiveDifference + ')' +
-            '\nNegative: ' + dailyNegativeSwabs.toLocaleString('en') + '(' + (negativeDifference > 0 ? '+' : '') + negativeDifference + ')' +
+            '\nNegative: ' + previousNegativeSwabs.toLocaleString('en') + '(' + (negativeDifference > 0 ? '+' : '') + negativeDifference + ')' +
             '\nTotal: ' + Number(previousTotalSwabs).toLocaleString('en') + '(' + (totalDifference > 0 ? '+' : '') + totalDifference + ')' +
             '\n' + hashtag +
             '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=swabs&dateSelection=lastTwoMonths&graphType=normal&displayType=graph&trendLine=false';
