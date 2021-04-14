@@ -2,7 +2,8 @@ const fs = require('fs');
 const moment = require('moment');
 const log4js = require("log4js");
 
-const writeChartToFile = require("./writeChartToFile");
+const chartHelper = require("./chartHelper");
+const twitterChart = require("./twitterChart");
 const constants = require("./constants");
 
 log4js.configure(constants.loggerConfiguration);
@@ -127,8 +128,10 @@ logger.info('Processing daily vaccinations');
               '\n' + hashtag +
               '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=vaccinations&dateSelection=lastTwoMonths&graphType=normal&displayType=graph&trendLine=false';
 
+  let b64Content = new Array();
   let configuration = generateConfiguration(labels, firstDose, secondDose, populationFirstDose, populationSecondDose);
-  writeChartToFile.processChart('vaccinations/dailyVaccinations.png', configuration, tweet, processRollingSevenDayAverage);
+  b64Content.push(chartHelper.writeChart('vaccinations/dailyVaccinations.png', configuration));
+  twitterChart.tweetChart(b64Content, tweet, processRollingSevenDayAverage);
 }
 
 function processVaccinationsByDay(lastTweetId) {
@@ -180,7 +183,8 @@ function processVaccinationsByDay(lastTweetId) {
               '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=vaccinations&dateSelection=lastTwoMonths&graphType=byWeekday&day=' +  lastDay + '&displayType=graph&trendLine=false';
 
   let configuration = generateConfiguration(labels, firstDose, secondDose, populationFirstDose, populationSecondDose);
-  writeChartToFile.processChart('vaccinations/byDay.png', configuration, tweet, function() {}, lastTweetId);
+  let b64Content = chartHelper.writeChart('vaccinations/byDay.png', configuration);
+  twitterChart.tweetChart(b64Content, tweet, , function() {}, lastTweetId);
 }
 
 function processRollingSevenDayAverage(inReplyToId) {
@@ -246,7 +250,8 @@ function processRollingSevenDayAverage(inReplyToId) {
               '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=vaccinations&dateSelection=lastTwoMonths&graphType=rollingSevenDayAverage&displayType=graph&trendLine=false';
 
   let configuration = generateConfiguration(labels, firstDose, secondDose, populationFirstDose, populationSecondDose);
-  writeChartToFile.processChart('vaccinations/rollingSevenDayAverage.png', configuration, tweet, processVaccinationsByDay, inReplyToId);
+  let b64Content = chartHelper.writeChart('vaccinations/dailyVaccinations2.png', configuration);
+  twitterChart.tweetChart(b64Content, tweet, processVaccinationsByDay, inReplyToId);
 }
 
 /*
