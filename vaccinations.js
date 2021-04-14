@@ -241,7 +241,7 @@ function processRollingSevenDayAverage(inReplyToId) {
               '\n' +
               '\nEstimated final vaccinations' +
               '\n1st dose: ' + moment(finalFirstDose).format('ddd, Do MMM YYYY') + '(' + Math.ceil(estimatedDaysToTotalFirstDose)  + ' days)' +
-              '\n2nd dose: ' + moment(finalSecondDose).format('ddd, Do MMM YYYY') + '(' + estimatedDaysToTotalSecondDose + ' days)' +
+              '\n2nd dose: ' + moment(finalSecondDose).format('ddd, Do MMM YYYY') + '(' + Math.ceil(estimatedDaysToTotalFirstDose + estimatedDaysToTotalSecondDose) + ' days)' +
               '\n' + hashtag +
               '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=vaccinations&dateSelection=lastTwoMonths&graphType=rollingSevenDayAverage&displayType=graph&trendLine=false';
 
