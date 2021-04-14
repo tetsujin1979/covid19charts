@@ -2,7 +2,8 @@ const fs = require('fs');
 const moment = require('moment'); 
 const log4js = require('log4js'); 
 
-const writeChartToFile = require("./writeChartToFile");
+const chartHelper = require("./chartHelper");
+const twitterChart = require("./twitterChart");
 const constants = require("./constants");
 
 log4js.configure(constants.loggerConfiguration);
@@ -88,7 +89,8 @@ function processNewCases() {
                 '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=cases&dateSelection=lastTwoMonths&graphType=normal&displayType=graph&trendLine=true';
 
     let configuration = generateConfiguration(labels, totalCases, dailyCases);
-    writeChartToFile.processChart('cases/dailyCases.png', configuration, tweet, processRollingSevenDayAverage);
+    let b64Content = chartHelper.writeChart('cases/dailyCases.png', configuration);
+    twitterChart.tweetChart(b64Content, tweet, processRollingSevenDayAverage);
 }
 
 function processCasesByDay(inReplyToId) {
@@ -127,7 +129,8 @@ function processCasesByDay(inReplyToId) {
             '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=cases&dateSelection=lastTwoMonths&graphType=byWeekday&day=' + day + '&displayType=graph&trendLine=false';
 
     let configuration = generateConfiguration(labels, totalCases, dailyCases);
-    writeChartToFile.processChart('cases/byDay.png', configuration, tweet, function() {}, inReplyToId);
+    let b64Content = chartHelper.writeChart('cases/byDay.png', configuration);
+    twitterChart.tweetChart(b64Content, tweet, function() {}, inReplyToId);
 }
 
 

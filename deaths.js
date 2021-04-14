@@ -2,7 +2,8 @@ const fs = require('fs');
 const moment = require('moment');
 const log4js = require("log4js");
 
-const writeChartToFile = require("./writeChartToFile");
+const chartHelper = require("./chartHelper");
+const twitterChart = require("./twitterChart");
 const constants = require("./constants");
 
 log4js.configure(constants.loggerConfiguration);
@@ -82,7 +83,8 @@ function processNewDeaths() {
               '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=deaths&dateSelection=lastTwoMonths&graphType=normal&displayType=graph&trendLine=false';
 
   let configuration = generateConfiguration(labels, totalDeaths, dailyDeaths);
-  writeChartToFile.processChart('deaths/daily.png', configuration, tweet, function() {});
+  let b64Content = chartHelper.writeChart('deaths/daily.png', configuration);
+  twitterChart.tweetChart(b64Content, tweet, function() {});
 }
 
 /*

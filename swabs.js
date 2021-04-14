@@ -2,7 +2,8 @@ const fs = require('fs');
 const moment = require('moment');
 const log4js = require("log4js");
 
-const writeChartToFile = require("./writeChartToFile");
+const chartHelper = require("./chartHelper");
+const twitterChart = require("./twitterChart");
 const constants = require("./constants");
 
 log4js.configure(constants.loggerConfiguration);
@@ -110,7 +111,8 @@ function processNewSwabs() {
             '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=swabs&dateSelection=lastTwoMonths&graphType=normal&displayType=graph&trendLine=false';
 
   let configuration = generateConfiguration(labels, percentagePositive, positiveSwabs, negativeSwabs);
-  writeChartToFile.processChart('swabs/dailySwabs.png', configuration, tweet, processRollingSevenDayAverage);
+  let b64Content = chartHelper.writeChart('swabs/dailySwabs.png', configuration, );
+  twitterChart.tweetChart(b64Content, tweet, processRollingSevenDayAverage);
 }
 
 function processSwabsByDay(lastTweetId) {
@@ -156,7 +158,8 @@ function processSwabsByDay(lastTweetId) {
             '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=swabs&dateSelection=lastTwoMonths&graphType=byWeekday&day=' + lastDay + '&displayType=graph&trendLine=false';
 
   let configuration = generateConfiguration(labels, percentagePositive, positiveSwabs, negativeSwabs);
-  writeChartToFile.processChart('swabs/swabsByDay.png', configuration, tweet, function() {}, lastTweetId);
+  let b64Content = chartHelper.writeChart('swabs/swabsByDay.png', configuration);
+  twitterChart.tweetChart(b64Content, tweet, function() {}, lastTweetId);
 }
 
 function processRollingSevenDayAverage(inReplyToId) {
@@ -203,7 +206,8 @@ function processRollingSevenDayAverage(inReplyToId) {
               '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=swabs&dateSelection=lastTwoMonths&graphType=rollingSevenDayAverage&displayType=graph&trendLine=false';
 
   let configuration = generateConfiguration(labels, percentagePositive, positiveSwabs, negativeSwabs);
-  writeChartToFile.processChart('swabs/rollingSevenDayAverage.png', configuration, tweet, processSwabsByDay, inReplyToId);
+  let b64Content = chartHelper.writeChart('swabs/rollingSevenDayAverage.png', configuration);
+  twitterChart.tweetChart(b64Content, tweet, processSwabsByDay, inReplyToId);
 }
 
 /*
