@@ -3,7 +3,6 @@ const fs = require('fs');
 const fsPromises = require('fs').promises;
 const log4js = require("log4js");
 
-const twitterChart = require('./twitterChart');
 const constants = require("./constants");
 
 log4js.configure(constants.loggerConfiguration);
@@ -30,17 +29,19 @@ const chartCallback = (ChartJS) => {
 };
 const chartJSNodeCanvas = new ChartJSNodeCanvas({ width, height, chartCallback });
 
-const processChart = async function(filename, configuration, tweet, callback, inReplyToId) {
-  logger.info(`Writing ${filename}`);
-
-  await fsPromises.writeFile(filename, await chartJSNodeCanvas.renderToBuffer(configuration), function(err) {
-      if (err) {
-          logger.error(err);
-      }
-  });
-  let b64content = fs.readFileSync(filename, { encoding: 'base64' });
-  twitterChart.tweetChart(b64content, tweet, callback, inReplyToId);
+const writeChart = function(filename, configuration) {
+  logger.info(`Creating chart at ${filename}`);
+  try {
+    chartJSNodeCanvas.renderToBuffer(configuration).then(function (data) {
+      fs.writeFileSync(filename, data);
+    });
+  } catch (err) {
+    logger.error(`Error occured writing ${filename}\t${err}`);
+    process.exit(-1);
+  }
+  let b64Content = fs.readFileSync(filename, { encoding: 'base64' });
+  logger.debug(`Returning ${b64Content}`);
+  return b64Content;
 };    
 
-exports.processChart = processChart;
-
+exports.writeChart = writeChart;
