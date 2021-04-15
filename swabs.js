@@ -83,30 +83,17 @@ function processNewSwabs() {
     negativeSwabs.data.push(value.negativeSwabs);
     percentagePositive.data.push(value.percentagePositive);
   });
-  let previousDay = moment(graphData[graphData.length - 2].date).format('dddd, Do MMMM');
-  let previousPositiveSwabs = Number(positiveSwabs.data[positiveSwabs.data.length - 2]);
-  let previousNegativeSwabs = Number(negativeSwabs.data[negativeSwabs.data.length - 2]);
-  let previousTotalSwabs = previousPositiveSwabs + previousNegativeSwabs;
-  let previousPercentagePositive = Number(percentagePositive.data[percentagePositive.data.length - 2]);
-
   let dailyPositiveSwabs = Number(positiveSwabs.data[positiveSwabs.data.length - 1]);
   let dailyNegativeSwabs = Number(negativeSwabs.data[negativeSwabs.data.length - 1]);
   let dailyTotalSwabs = dailyPositiveSwabs + dailyNegativeSwabs;
   let dailyPercentagePositive = Number(percentagePositive.data[percentagePositive.data.length - 1]);
 
-  let positiveDifference = dailyPositiveSwabs - previousPositiveSwabs;
-  let negativeDifference = dailyNegativeSwabs - previousNegativeSwabs;
-  let totalDifference = dailyTotalSwabs - previousTotalSwabs;
   let tweet = header +
             '\n🧪 Swabs: Daily results' +
             '\nPositive: ' + dailyPositiveSwabs.toLocaleString('en') + '(' + dailyPercentagePositive + '%)' +
             '\nNegative: ' + dailyNegativeSwabs.toLocaleString('en') + '(' + (100 - dailyPercentagePositive) + '%)' +
             '\nTotal: ' + Number(dailyTotalSwabs).toLocaleString('en') +
             '\n' +
-            '\nYesterday\'s results(change)' +
-            '\nPositive: ' + previousPositiveSwabs.toLocaleString('en') + '(' + (positiveDifference > 0 ? '+' : '') + positiveDifference + ')' +
-            '\nNegative: ' + dailyNegativeSwabs.toLocaleString('en') + '(' + (negativeDifference > 0 ? '+' : '') + negativeDifference + ')' +
-            '\nTotal: ' + Number(previousTotalSwabs).toLocaleString('en') + '(' + (totalDifference > 0 ? '+' : '') + totalDifference + ')' +
             '\n' + hashtag +
             '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=swabs&dateSelection=lastTwoMonths&graphType=normal&displayType=graph&trendLine=false';
 
@@ -130,7 +117,7 @@ function processSwabsByDay(lastTweetId) {
       percentagePositive.data.push(value.percentagePositive);
     }
   });
-  let previousDay = moment(graphData[graphData.length - 8].date).format('dddd, Do MMMM');
+  let previousDay = moment(graphData[graphData.length - 8].date).format('ddd, Do MMM');
   let previousPositiveSwabs = Number(positiveSwabs.data[positiveSwabs.data.length - 2]);
   let previousNegativeSwabs = Number(negativeSwabs.data[negativeSwabs.data.length - 2]);
   let previousTotalSwabs = previousPositiveSwabs + previousNegativeSwabs;
@@ -145,11 +132,11 @@ function processSwabsByDay(lastTweetId) {
   let negativeDifference = dailyNegativeSwabs - previousNegativeSwabs;
   let totalDifference = dailyTotalSwabs - previousTotalSwabs;
   let tweet = '🧪 Swabs: By day' +
-            '\n' + moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM') + '\'s tests' +
+            '\n' + moment(graphData[graphData.length - 1].date).format('ddd, Do MMM') +
             '\nPositive: ' + dailyPositiveSwabs.toLocaleString('en') +
             '\nNegative: ' + dailyNegativeSwabs.toLocaleString('en') +
             '\n' +
-            '\n' + previousDay + '\'s tests' +
+            '\n' + previousDay +
             '\nResults(%)(Difference | % difference)' +
             '\nPositive: ' + previousPositiveSwabs.toLocaleString('en') + '(' + previousPercentagePositive + '%)(' + positiveDifference + ' | ' + ((positiveDifference * 100) / previousPositiveSwabs).toFixed(2) +'%)' +
             '\nNegative: ' + previousNegativeSwabs.toLocaleString('en') + '(' + (100 - previousPercentagePositive) + '%)(' + negativeDifference + ' | ' + ((negativeDifference * 100) / previousNegativeSwabs).toFixed(2) + '%)' +
