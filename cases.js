@@ -77,12 +77,8 @@ function processNewCases() {
     let previousDaysCases = dailyCases.data[dailyCases.data.length - 2];
     let change = newCases - previousDaysCases;
     let percentageChange = ((change * 100) / previousDaysCases).toFixed(2)
-    let tweet = header +
-                '\n🦠 Cases: Daily cases' + 
-                '\nNew cases: ' + newCases + 
-                '\nYesterday\'s cases: ' + previousDaysCases + 
-                '\nDifference: ' + change + 
-                '\nPercentage difference: ' + percentageChange + '%' +
+    let tweet = '🦠 Cases: Daily cases' + 
+                '\n' + moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM') + ': ' + newCases + 
 //                '\nTotal cases: ' + Number(totalCases.data[totalCases.data.length - 1]).toLocaleString('en') + 
                 '\n' +
                 '\n' + hashtag + 
@@ -117,11 +113,9 @@ function processCasesByDay(inReplyToId) {
     let lastWeeksPercentageChange = ((lastWeeksChange * 100) / lastWeeksCases).toFixed(2);
     let previousWeeksPercentageChange = ((previousWeeksChange * 100) / previousWeeksCases).toFixed(2);
 
-    tweet = header +
-            '\n🦠 Cases: By day' + 
-            '\nToday: ' + newCases + 
-            '\n' +
+    tweet = '🦠 Cases: By day' + 
             '\nDate: Cases(Difference | % difference)' +
+            '\n' + moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM') + ': ' + newCases + 
             '\n' + moment(graphData[graphData.length - 8].date).format('dddd, Do MMMM') + ': ' + lastWeeksCases + '(' + lastWeeksChange + ' | ' + lastWeeksPercentageChange + '%)' +
             '\n' + moment(graphData[graphData.length - 15].date).format('dddd, Do MMMM') + ': ' + previousWeeksCases + '(' + previousWeeksChange + ' | ' + previousWeeksPercentageChange + '%)' +
             '\n' +
@@ -172,19 +166,18 @@ function processRollingSevenDayAverage(inReplyToId) {
     let previousWeeksCasesChange = Number(newCases - previousWeeksCases).toFixed(2);
     let previousWeeksCasesPercentageChange = ((previousWeeksCasesChange * 100) / previousWeeksCases).toFixed(2)
 
-    let tweet = header +
-            '\n🦠 Cases: Seven day average' +
-            '\nToday: ' + newCases +
-            '\n' +
-            '\nDate: Cases(Difference | % difference)' +
-            '\n' + moment(graphData[graphData.length - 8].date).format('dddd, Do MMMM') + ': ' + previousDaysCases + '(' + previousDaysCasesChange + ' | ' + previousDaysCasesPercentageChange + '%' + ')' +
-            '\n' + moment(graphData[graphData.length - 15].date).format('dddd, Do MMMM') + ': ' + previousWeeksCases + '(' + previousWeeksCasesChange + ' | ' + previousWeeksCasesPercentageChange + '%' + ')' +
-            '\n' +
-            '\n' + hashtag +
-            '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=cases&dateSelection=lastTwoMonths&graphType=rollingSevenDayAverage&displayType=graph&trendLine=false';
+    let tweet = '🦠 Cases: Seven day average' +
+                '\nDate: Cases(Difference | % difference)' +
+                '\n' + moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM') + ': ' + newCases + 
+                '\n' + moment(graphData[graphData.length - 8].date).format('dddd, Do MMMM') + ': ' + previousDaysCases + '(' + previousDaysCasesChange + ' | ' + previousDaysCasesPercentageChange + '%' + ')' +
+                '\n' + moment(graphData[graphData.length - 15].date).format('dddd, Do MMMM') + ': ' + previousWeeksCases + '(' + previousWeeksCasesChange + ' | ' + previousWeeksCasesPercentageChange + '%' + ')' +
+                '\n' +
+                '\n' + hashtag +
+                '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=cases&dateSelection=lastTwoMonths&graphType=rollingSevenDayAverage&displayType=graph&trendLine=false';
 
     let configuration = generateConfiguration(labels, totalCases, dailyCases);
-    writeChartToFile.processChart('cases/rollingSevenDayAverage.png', configuration, tweet, processCasesByDay, inReplyToId);
+    let b64Content = chartHelper.writeChart('cases/rollingSevenDayAverage.png', configuration);
+    twitterChart.tweetChart(b64Content, tweet, processCasesByDay, inReplyToId);
 }
 
 /*
