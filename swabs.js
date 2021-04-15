@@ -88,14 +88,14 @@ function processNewSwabs() {
   let dailyTotalSwabs = dailyPositiveSwabs + dailyNegativeSwabs;
   let dailyPercentagePositive = Number(percentagePositive.data[percentagePositive.data.length - 1]);
 
-  let tweet = header +
-            '\n🧪 Swabs: Daily results' +
-            '\nPositive: ' + dailyPositiveSwabs.toLocaleString('en') + '(' + dailyPercentagePositive + '%)' +
-            '\nNegative: ' + dailyNegativeSwabs.toLocaleString('en') + '(' + (100 - dailyPercentagePositive) + '%)' +
-            '\nTotal: ' + Number(dailyTotalSwabs).toLocaleString('en') +
-            '\n' +
-            '\n' + hashtag +
-            '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=swabs&dateSelection=lastTwoMonths&graphType=normal&displayType=graph&trendLine=false';
+  let tweet = '\n🧪 Swabs: Daily results' +
+              '\n' + moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM YYYY') +
+              '\nPositive: ' + dailyPositiveSwabs.toLocaleString('en') + '(' + dailyPercentagePositive + '%)' +
+              '\nNegative: ' + dailyNegativeSwabs.toLocaleString('en') + '(' + (100 - dailyPercentagePositive) + '%)' +
+              '\nTotal: ' + Number(dailyTotalSwabs).toLocaleString('en') +
+              '\n' +
+              '\n' + hashtag +
+              '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=swabs&dateSelection=lastTwoMonths&graphType=normal&displayType=graph&trendLine=false';
 
   let configuration = generateConfiguration(labels, percentagePositive, positiveSwabs, negativeSwabs);
   let b64Content = chartHelper.writeChart('swabs/dailySwabs.png', configuration, );
@@ -184,7 +184,8 @@ function processRollingSevenDayAverage(inReplyToId) {
   let dailyTotalSwabs = dailyPositiveSwabs + dailyNegativeSwabs;
   let dailyPercentagePositive = Number(percentagePositive.data[percentagePositive.data.length - 1]);
   let tweet = header + 
-              '\n🧪 Swabs: Seven day average results' +
+              '\n🧪 Swabs: Seven day average' +
+              '\n' + moment(graphData[graphData.length - 1].date).format('ddd, Do MMM') +
               '\nPositive tests: ' + dailyPositiveSwabs.toLocaleString('en') + '(' + dailyPercentagePositive + '%)' +
               '\nNegative tests: ' + dailyNegativeSwabs.toLocaleString('en') + '(' + (100 - dailyPercentagePositive) + '%)' +
               '\nTotal tests: ' + Number(dailyTotalSwabs).toLocaleString('en') +
