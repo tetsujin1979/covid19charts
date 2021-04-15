@@ -19,9 +19,10 @@ const tweetChart = (files, tweet, callback, inReplyToId) => {
   let mediaIds = new Array();
   files.forEach(function(file, index) { 
     uploadMedia(file, function(mediaId) {
-      logger.debug(`Adding mediaId ${mediaId}`);
+      logger.debug(`Adding mediaId: ${mediaId}`);
       mediaIds.push(mediaId);
-      if (index == (files.length - 1)) {
+      if (mediaIds.length === files.length) {
+        logger.debug(`Media uploaded\tmediaIds: ${mediaIds}`);
         updateStatus(tweet, mediaIds, callback, inReplyToId);
       }
     });
@@ -42,7 +43,7 @@ function uploadMedia(b64content, callback) {
 }
 
 function updateStatus(tweet, mediaIds, callback, inReplyToId) {
-  logger.debug(`Updating twitter status: "${tweet}"`);
+  logger.debug('Updating twitter status');
   let meta_params = {media_id: mediaIds[0]};
   client.post('media/metadata/create', meta_params, function (err, data, response) {
     if (!err) {
