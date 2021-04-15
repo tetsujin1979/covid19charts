@@ -20,6 +20,15 @@ const chartCallback = (ChartJS) => {
           let ctx = chartInstance.chart.ctx;
           ctx.fillStyle = "white";
           ctx.fillRect(0, 0, chartInstance.chart.width, chartInstance.chart.height);
+          
+          // To fix a minor visual glitch with the doughnut chart where the legend colour
+          // for the "Second Dose" is grey
+          var legends = chartInstance.legend.legendItems;
+          legends.forEach(function(e) {
+            if (e.text === 'Second Dose') {
+              e.fillStyle = 'rgba(63, 63, 191, 0.6)';
+            }
+          });        
         }
       });
     // New chart type example: https://www.chartjs.org/docs/latest/developers/charts.html
@@ -31,10 +40,13 @@ const chartJSNodeCanvas = new ChartJSNodeCanvas({ width, height, chartCallback }
 
 const writeChart = function(filename, configuration) {
   logger.info(`Creating chart at ${filename}`);
+  if (fs.existsSync(filename)) {
+    logger.debug(`${filename} exists, deleting`);
+    fs.unlinkSync(filename);
+  }
   try {
-    chartJSNodeCanvas.renderToBuffer(configuration).then(function (data) {
-      fs.writeFileSync(filename, data);
-    });
+    let data = chartJSNodeCanvas.renderToBufferSync(configuration);
+    fs.writeFileSync(filename, data);
   } catch (err) {
     logger.error(`Error occured writing ${filename}\t${err}`);
     process.exit(-1);
