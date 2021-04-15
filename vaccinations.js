@@ -131,6 +131,8 @@ logger.info('Processing daily vaccinations');
   let b64Content = new Array();
   let configuration = generateConfiguration(labels, firstDose, secondDose, populationFirstDose, populationSecondDose);
   b64Content.push(chartHelper.writeChart('vaccinations/dailyVaccinations.png', configuration));
+  configuration = generateDoughnutConfiguration(labels, finalEntry.populationFirstDose, finalEntry.populationSecondDose);
+  b64Content.push(chartHelper.writeChart('vaccinations/vaccinationProgress.png', configuration));
   twitterChart.tweetChart(b64Content, tweet, processRollingSevenDayAverage);
 }
 
@@ -155,7 +157,7 @@ function processVaccinationsByDay(lastTweetId) {
       populationSecondDose.data.push(value.totalSecondDose);
     }
   });
-  let previousDay = moment(graphData[graphData.length - 8].date).format('dddd, Do MMMM');
+  let previousDay = moment(graphData[graphData.length - 8].date).format('ddd, Do MMMM');
   let dailyFirstDose = firstDose.data[firstDose.data.length - 1];
   let dailySecondDose = secondDose.data[secondDose.data.length - 1];
   let previousFirstDose = firstDose.data[firstDose.data.length - 2];
@@ -168,8 +170,8 @@ function processVaccinationsByDay(lastTweetId) {
   let secondDoseChange = dailySecondDose - previousSecondDose;
   let totalDosesChange = firstDoseChange + secondDoseChange;
 
-  let tweet = '💉 Vaccinations by day' +
-              '\n' + moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM') + 
+  let tweet = '💉 Vaccinations: By day' +
+              '\n' + moment(graphData[graphData.length - 1].date).format('ddd, Do MMMM') + 
               '\n1st dose: ' + Number(dailyFirstDose).toLocaleString('en') +
               '\n2nd dose: ' + Number(dailySecondDose).toLocaleString('en') +
               '\n' +
@@ -184,7 +186,7 @@ function processVaccinationsByDay(lastTweetId) {
 
   let configuration = generateConfiguration(labels, firstDose, secondDose, populationFirstDose, populationSecondDose);
   let b64Content = chartHelper.writeChart('vaccinations/byDay.png', configuration);
-  twitterChart.tweetChart(b64Content, tweet, , function() {}, lastTweetId);
+  twitterChart.tweetChart(b64Content, tweet, function() {}, lastTweetId);
 }
 
 function processRollingSevenDayAverage(inReplyToId) {
@@ -245,12 +247,12 @@ function processRollingSevenDayAverage(inReplyToId) {
               '\n' +
               '\nEstimated final vaccinations' +
               '\n1st dose: ' + moment(finalFirstDose).format('ddd, Do MMM YYYY') + '(' + Math.ceil(estimatedDaysToTotalFirstDose)  + ' days)' +
-              '\n2nd dose: ' + moment(finalSecondDose).format('ddd, Do MMM YYYY') + '(' + estimatedDaysToTotalSecondDose + ' days)' +
+              '\n2nd dose: ' + moment(finalSecondDose).format('ddd, Do MMM YYYY') + '(' + Math.ceil(estimatedDaysToTotalFirstDose + estimatedDaysToTotalSecondDose) + ' days)' +
               '\n' + hashtag +
               '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=vaccinations&dateSelection=lastTwoMonths&graphType=rollingSevenDayAverage&displayType=graph&trendLine=false';
 
   let configuration = generateConfiguration(labels, firstDose, secondDose, populationFirstDose, populationSecondDose);
-  let b64Content = chartHelper.writeChart('vaccinations/dailyVaccinations2.png', configuration);
+  let b64Content = chartHelper.writeChart('vaccinations/processRollingSevenDayAverage.png', configuration);
   twitterChart.tweetChart(b64Content, tweet, processVaccinationsByDay, inReplyToId);
 }
 
@@ -348,6 +350,26 @@ function generateConfiguration(labels, firstDose, secondDose, populationFirstDos
           }
         }]
       }
+    }
+  };
+}
+// /home/joe/Documents/workspace/github/covid19charts/vaccinations
+function generateDoughnutConfiguration(labels, firstDosePercentage, secondDosePercentage) {
+  return {
+    type: "doughnut",
+    data: {
+      labels: ['First Dose', 'Second Dose'],
+      datasets: [{
+        label: 'First Dose label',
+        data: [firstDosePercentage, (100 - firstDosePercentage)],
+        backgroundColor: ['rgba(237, 100, 127, .6)', 'rgba(228, 233, 237, 1)'],
+        color: 'black'
+      }, {
+        label: 'Second Dose label',
+        data: [secondDosePercentage, (100 - secondDosePercentage)],
+        backgroundColor: ['rgba(63, 63, 191, 0.6)', 'rgba(228, 233, 237, 1)'],
+        color: 'yellow'
+      }]
     }
   };
 }
