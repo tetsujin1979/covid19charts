@@ -84,7 +84,7 @@ function processNewCases() {
                 '\n' + hashtag + 
                 '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=cases&dateSelection=lastTwoMonths&graphType=normal&displayType=graph&trendLine=true';
 
-    let configuration = generateConfiguration(labels, totalCases, dailyCases);
+    let configuration = generateConfiguration(labels, totalCases, dailyCases, "Daily Cases");
     let b64Content = chartHelper.writeChart('cases/dailyCases.png', configuration);
     twitterChart.tweetChart(b64Content, tweet, processRollingSevenDayAverage);
 }
@@ -122,7 +122,7 @@ function processCasesByDay(inReplyToId) {
             '\n' + hashtag + 
             '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=cases&dateSelection=lastTwoMonths&graphType=byWeekday&day=' + day + '&displayType=graph&trendLine=false';
 
-    let configuration = generateConfiguration(labels, totalCases, dailyCases);
+    let configuration = generateConfiguration(labels, totalCases, dailyCases, "Daily Cases By Day - " + days[day]);
     let b64Content = chartHelper.writeChart('cases/byDay.png', configuration);
     twitterChart.tweetChart(b64Content, tweet, function() {}, inReplyToId);
 }
@@ -175,7 +175,7 @@ function processRollingSevenDayAverage(inReplyToId) {
                 '\n' + hashtag +
                 '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=cases&dateSelection=lastTwoMonths&graphType=rollingSevenDayAverage&displayType=graph&trendLine=false';
 
-    let configuration = generateConfiguration(labels, totalCases, dailyCases);
+    let configuration = generateConfiguration(labels, totalCases, dailyCases, "Seven Day Average Cases");
     let b64Content = chartHelper.writeChart('cases/rollingSevenDayAverage.png', configuration);
     twitterChart.tweetChart(b64Content, tweet, processCasesByDay, inReplyToId);
 }
@@ -223,7 +223,7 @@ function processSevenDayAverage(inReplyToId) {
 }
 */
 
-function generateConfiguration(labels, totalCases, dailyCases) {
+function generateConfiguration(labels, totalCases, dailyCases, title) {
     return {
         type: "bar",
         data: {
@@ -231,6 +231,9 @@ function generateConfiguration(labels, totalCases, dailyCases) {
             datasets: [totalCases, dailyCases]
         },
         options: {
+            title: {
+                text: title
+            },
             scales: {
                 yAxes: [{
                     id: "dailyCasesAxis",

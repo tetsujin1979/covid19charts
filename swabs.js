@@ -97,7 +97,7 @@ function processNewSwabs() {
               '\n' + hashtag +
               '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=swabs&dateSelection=lastTwoMonths&graphType=normal&displayType=graph&trendLine=false';
 
-  let configuration = generateConfiguration(labels, percentagePositive, positiveSwabs, negativeSwabs);
+  let configuration = generateConfiguration(labels, percentagePositive, positiveSwabs, negativeSwabs, "Daily Swab Results");
   let b64Content = chartHelper.writeChart('swabs/dailySwabs.png', configuration, );
   twitterChart.tweetChart(b64Content, tweet, processRollingSevenDayAverage);
 }
@@ -144,7 +144,7 @@ function processSwabsByDay(lastTweetId) {
             '\n' + hashtag + 
             '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=swabs&dateSelection=lastTwoMonths&graphType=byWeekday&day=' + lastDay + '&displayType=graph&trendLine=false';
 
-  let configuration = generateConfiguration(labels, percentagePositive, positiveSwabs, negativeSwabs);
+  let configuration = generateConfiguration(labels, percentagePositive, positiveSwabs, negativeSwabs, "Swab Results By Day");
   let b64Content = chartHelper.writeChart('swabs/swabsByDay.png', configuration);
   twitterChart.tweetChart(b64Content, tweet, function() {}, lastTweetId);
 }
@@ -193,7 +193,7 @@ function processRollingSevenDayAverage(inReplyToId) {
               '\n' + hashtag +
               '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=swabs&dateSelection=lastTwoMonths&graphType=rollingSevenDayAverage&displayType=graph&trendLine=false';
 
-  let configuration = generateConfiguration(labels, percentagePositive, positiveSwabs, negativeSwabs);
+  let configuration = generateConfiguration(labels, percentagePositive, positiveSwabs, negativeSwabs, "Seven Day Average Swab Results");
   let b64Content = chartHelper.writeChart('swabs/rollingSevenDayAverage.png', configuration);
   twitterChart.tweetChart(b64Content, tweet, processSwabsByDay, inReplyToId);
 }
@@ -286,7 +286,7 @@ function processSevenDayAverage(inReplyToId) {
 */
 
 
-function generateConfiguration(labels, percentagePositive, positiveSwabs, negativeSwabs) {
+function generateConfiguration(labels, percentagePositive, positiveSwabs, negativeSwabs, title) {
   return {
     type: "bar",
     data: {
@@ -294,6 +294,9 @@ function generateConfiguration(labels, percentagePositive, positiveSwabs, negati
       datasets: [percentagePositive, positiveSwabs, negativeSwabs]
     },
     options: {
+      title: {
+        text: title
+      },
       scales: {
           xAxes: [{
               stacked: true

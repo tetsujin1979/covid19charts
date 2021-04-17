@@ -82,7 +82,7 @@ function processNewDeaths() {
               '\n' + hashtag +
               '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=deaths&dateSelection=lastTwoMonths&graphType=normal&displayType=graph&trendLine=false';
 
-  let configuration = generateConfiguration(labels, totalDeaths, dailyDeaths);
+  let configuration = generateConfiguration(labels, totalDeaths, dailyDeaths, "Daily Deaths");
   let b64Content = chartHelper.writeChart('deaths/daily.png', configuration);
   twitterChart.tweetChart(b64Content, tweet, function() {});
 }
@@ -173,7 +173,7 @@ function processDeathsByDay(inReplyToId)
   // };
 */
 
-function generateConfiguration(labels, totalDeaths, dailyDeaths) {
+function generateConfiguration(labels, totalDeaths, dailyDeaths, title) {
   return {
     type: "bar",
     data: {
@@ -181,6 +181,9 @@ function generateConfiguration(labels, totalDeaths, dailyDeaths) {
       datasets: [totalDeaths, dailyDeaths]
     },
     options: {
+      title: {
+        text: title
+      },
       scales: {
         yAxes: [{
           id: "dailyDeathsAxis",

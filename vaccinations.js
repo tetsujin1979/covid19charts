@@ -6,6 +6,8 @@ const chartHelper = require("./chartHelper");
 const twitterChart = require("./twitterChart");
 const constants = require("./constants");
 
+const days = constants.days;
+
 log4js.configure(constants.loggerConfiguration);
 const logger = log4js.getLogger('vaccinations');
 
@@ -120,7 +122,7 @@ logger.info('Processing daily vaccinations');
               '\n' + moment(finalEntry.date).format('dddd, Do MMMM') + 
               '\n1st dose: ' + Number(dailyFirstDose).toLocaleString('en') +
               '\n2nd dose: ' + Number(dailySecondDose).toLocaleString('en') +
-              '\nTotal daily doses: ' + Number(dailyFirstDose + dailySecondDose).toLocaleString('en') +
+              '\nTotal doses: ' + Number(dailyFirstDose + dailySecondDose).toLocaleString('en') +
               '\n' +
               '\nTotal 1st dose: ' + Number(totalFirstDose).toLocaleString('en') + '(' + finalEntry.populationFirstDose + '% of population)' +
               '\nTotal 2nd dose: ' + Number(totalSecondDose).toLocaleString('en') + '(' + finalEntry.populationSecondDose + '% of population)' +
@@ -129,7 +131,7 @@ logger.info('Processing daily vaccinations');
               '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=vaccinations&dateSelection=lastTwoMonths&graphType=normal&displayType=graph&trendLine=false';
 
   let b64Content = new Array();
-  let configuration = generateConfiguration(labels, firstDose, secondDose, populationFirstDose, populationSecondDose);
+  let configuration = generateConfiguration(labels, firstDose, secondDose, populationFirstDose, populationSecondDose, "Daily Vaccinations");
   b64Content.push(chartHelper.writeChart('vaccinations/dailyVaccinations.png', configuration));
   configuration = generateDoughnutConfiguration(labels, finalEntry.populationFirstDose, finalEntry.populationSecondDose);
   b64Content.push(chartHelper.writeChart('vaccinations/vaccinationProgress.png', configuration));
@@ -138,7 +140,7 @@ logger.info('Processing daily vaccinations');
 
 function processVaccinationsByDay(lastTweetId) {
   logger.info('Processing vaccinations by day');
-  let lastDay = graphData[graphData.length - 1].date.getDay();
+  let day = graphData[graphData.length - 1].date.getDay();
   let labels = new Array();
 
   firstDose.data = new Array();
@@ -147,7 +149,7 @@ function processVaccinationsByDay(lastTweetId) {
   populationSecondDose.data = new Array();
 
   graphData.forEach(function(value, index) {
-    if(value.date.getDay() == lastDay) {
+    if(value.date.getDay() == day) {
       firstDose.data.push();
       secondDose.data.push();
       labels.push(value.date.toDateString());
@@ -182,9 +184,9 @@ function processVaccinationsByDay(lastTweetId) {
               '\nTotal: ' + Number(previousFirstDose + previousSecondDose).toLocaleString('en') + '(' + (totalDosesChange > 0 ? '+' : '') + (totalDosesChange).toLocaleString('en') + ' | ' + ((totalDosesChange * 100) / (previousFirstDose + previousSecondDose)).toFixed(2) + '%)' +
               '\n' +
               '\n' + hashtag +
-              '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=vaccinations&dateSelection=lastTwoMonths&graphType=byWeekday&day=' +  lastDay + '&displayType=graph&trendLine=false';
+              '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=vaccinations&dateSelection=lastTwoMonths&graphType=byWeekday&day=' + day + '&displayType=graph&trendLine=false';
 
-  let configuration = generateConfiguration(labels, firstDose, secondDose, populationFirstDose, populationSecondDose);
+  let configuration = generateConfiguration(labels, firstDose, secondDose, populationFirstDose, populationSecondDose, "Vaccinations By Day - " + days[day]);
   let b64Content = chartHelper.writeChart('vaccinations/byDay.png', configuration);
   twitterChart.tweetChart(b64Content, tweet, function() {}, lastTweetId);
 }
@@ -251,7 +253,7 @@ function processRollingSevenDayAverage(inReplyToId) {
               '\n' + hashtag +
               '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=vaccinations&dateSelection=lastTwoMonths&graphType=rollingSevenDayAverage&displayType=graph&trendLine=false';
 
-  let configuration = generateConfiguration(labels, firstDose, secondDose, populationFirstDose, populationSecondDose);
+  let configuration = generateConfiguration(labels, firstDose, secondDose, populationFirstDose, populationSecondDose, "Seven Day Average Vaccinations");
   let b64Content = chartHelper.writeChart('vaccinations/processRollingSevenDayAverage.png', configuration);
   twitterChart.tweetChart(b64Content, tweet, processVaccinationsByDay, inReplyToId);
 }
@@ -312,7 +314,7 @@ function processSevenDayAverage(inReplyToId) {
 }
 */
 
-function generateConfiguration(labels, firstDose, secondDose, populationFirstDose, populationSecondDose) {
+function generateConfiguration(labels, firstDose, secondDose, populationFirstDose, populationSecondDose, title) {
   return {
     type: "bar",
     data: {
@@ -320,6 +322,9 @@ function generateConfiguration(labels, firstDose, secondDose, populationFirstDos
       datasets: [firstDose, secondDose, populationFirstDose, populationSecondDose]
     },
     options: {
+      title: {
+        text: title
+      },
       scales: {
         xAxes: [{
           stacked: true
@@ -370,6 +375,11 @@ function generateDoughnutConfiguration(labels, firstDosePercentage, secondDosePe
         backgroundColor: ['rgba(63, 63, 191, 0.6)', 'rgba(228, 233, 237, 1)'],
         color: 'yellow'
       }]
+    },
+    options: {
+      title: {
+        text: "Vaccination Progress"
+      }      
     }
   };
 }
