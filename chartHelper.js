@@ -12,10 +12,17 @@ const logger = log4js.getLogger('writeChartToFile');
 const width = 1600;
 const height = 900;
 
+const watermark = new Canvas.Image;
+watermark.src = fs.readFileSync('./watermark.png');
+
 const chartCallback = (ChartJS) => {
     // Global config example: https://www.chartjs.org/docs/latest/configuration/
     ChartJS.defaults.global.elements.rectangle.borderWidth = 2;
-    ChartJS.defaults.global.layout.padding.bottom = 50;
+    // ChartJS.defaults.global.layout.padding.bottom = 50;
+    ChartJS.defaults.global.title.display = true;
+    ChartJS.defaults.global.title.fontSize = 20;
+    ChartJS.defaults.global.title.fontStyle = "normal";
+    ChartJS.defaults.global.title.position = "bottom";
     // Global plugin example: https://www.chartjs.org/docs/latest/developers/plugins.html
     ChartJS.plugins.register({
         beforeDraw: function(chartInstance) {
@@ -39,12 +46,22 @@ const chartCallback = (ChartJS) => {
           let cHeight = canvas.clientHeight || canvas.height;
           let cWidth = canvas.clientWidth || canvas.width;
 
-          let watermark = new Canvas.Image;
-          watermark.src = fs.readFileSync('watermark.png');
           context.save();
 
-          context.globalAlpha = 0.75;
+          // Draw watermark
+          context.globalAlpha = 1.0;
           context.drawImage(watermark, canvas.width - watermark.width, canvas.height - watermark.height);
+
+          // Draw link at bottom left 
+          // Hack to use the current font value to set the new size
+          // There is no dedicated setter method for font size
+          let fontArgs = context.font.split(' ');
+          let newSize = '15px';
+          context.font = newSize + ' ' + fontArgs[fontArgs.length - 1];
+
+          context.fillStyle = "#666";
+          context.fillText("https://tetsujin1979.github.io/covid19dashboard/", 5, canvas.height - 20);
+
           context.restore();
         }
       });
