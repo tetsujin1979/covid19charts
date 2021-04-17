@@ -82,6 +82,7 @@ fs.readFile('./covid19dashboard/data.json', 'utf8', (err, data) => {
           date: date,
           firstDose: item.firstDose,
           secondDose: (item.hasOwnProperty("secondDose") ? item.secondDose : 0),
+          totalDailyDoses: (item.firstDose + (item.hasOwnProperty("secondDose") ? item.secondDose : 0)),
           totalFirstDose: totalFirstDose,
           totalSecondDose: totalSecondDose,
           populationFirstDose: populationFirstDose,
@@ -111,6 +112,14 @@ logger.info('Processing daily vaccinations');
     populationFirstDose.data.push(value.totalFirstDose);
     populationSecondDose.data.push(value.totalSecondDose);
   });
+  let maxFirstDose = graphData.reduce(function(prev, current) { return (prev.firstDose > current.firstDose) ? prev : current  });
+  let maxSecondDose = graphData.reduce(function(prev, current) { return (prev.secondDose > current.secondDose) ? prev : current  });
+  let maxDailyTotalDose = graphData.reduce(function(prev, current) { return (prev.totalDailyDoses > current.totalDailyDoses) ? prev : current  });
+
+  let isRecordFirstDose = (maxFirstDose.date === graphData[graphData.length - 1].date);
+  let isRecordSecondDose = (maxSecondDose.date === graphData[graphData.length - 1].date);
+  let isRecordDailyTotalDoses = (maxDailyTotalDose.date === graphData[graphData.length - 1].date);
+
   let dailyFirstDose = firstDose.data[firstDose.data.length - 1];
   let dailySecondDose = secondDose.data[secondDose.data.length - 1];
 
@@ -120,12 +129,12 @@ logger.info('Processing daily vaccinations');
 
   let tweet = '💉 Vaccinations: Daily doses' +
               '\n' + moment(finalEntry.date).format('dddd, Do MMMM') + 
-              '\n1st dose: ' + Number(dailyFirstDose).toLocaleString('en') +
-              '\n2nd dose: ' + Number(dailySecondDose).toLocaleString('en') +
-              '\nTotal doses: ' + Number(dailyFirstDose + dailySecondDose).toLocaleString('en') +
+              '\n1st dose: ' + Number(dailyFirstDose).toLocaleString('en') + (isRecordFirstDose ? '(New Record!)' : '') +
+              '\n2nd dose: ' + Number(dailySecondDose).toLocaleString('en') + (isRecordSecondDose ? '(New Record!)' : '') +
+              '\nTotal doses: ' + Number(dailyFirstDose + dailySecondDose).toLocaleString('en') + (isRecordDailyTotalDoses ? '(New Record!)' : '') +
               '\n' +
-              '\nTotal 1st dose: ' + Number(totalFirstDose).toLocaleString('en') + '(' + finalEntry.populationFirstDose + '% of population)' +
-              '\nTotal 2nd dose: ' + Number(totalSecondDose).toLocaleString('en') + '(' + finalEntry.populationSecondDose + '% of population)' +
+              '\nTotal 1st dose: ' + Number(totalFirstDose).toLocaleString('en') + '(' + finalEntry.populationFirstDose + '% of pop.)' +
+              '\nTotal 2nd dose: ' + Number(totalSecondDose).toLocaleString('en') + '(' + finalEntry.populationSecondDose + '% of pop.)' +
               '\nTotal doses: ' + Number(totalFirstDose + totalSecondDose).toLocaleString('en') +
               '\n' + hashtag +
               '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=vaccinations&dateSelection=lastTwoMonths&graphType=normal&displayType=graph&trendLine=false';
