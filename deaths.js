@@ -181,34 +181,34 @@ function generateConfiguration(labels, totalDeaths, dailyDeaths) {
       datasets: [totalDeaths, dailyDeaths]
     },
     options: {
-        scales: {
-          yAxes: [{
-              id: "dailyDeathsAxis",
-              ticks: {
-                  beginAtZero: true
-              },
-              gridLines: {
-                  display: false
-              },
-              scaleLabel: {
-                  display: true,
-                  labelString: "Daily Deaths"
-              }
-          }, {
-              id: "totalDeathsAxis",
-              position: "right",
-              ticks: {
-                  beginAtZero: true
-              },
-              gridLines: {
-                  display: false
-              },
-              scaleLabel: {
-                  display: true,
-                  labelString: "Total Deaths"
-              }
-          }]
-        }
+      scales: {
+        yAxes: [{
+          id: "dailyDeathsAxis",
+          ticks: {
+              beginAtZero: true
+          },
+          gridLines: {
+              display: false
+          },
+          scaleLabel: {
+              display: true,
+              labelString: "Daily Deaths"
+          }
+        }, {
+          id: "totalDeathsAxis",
+          position: "right",
+          ticks: {
+              beginAtZero: true
+          },
+          gridLines: {
+              display: false
+          },
+          scaleLabel: {
+              display: true,
+              labelString: "Total Deaths"
+          }
+        }]
       }
-    };
+    }
+  };
 }
