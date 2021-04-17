@@ -11,22 +11,27 @@ const logger = log4js.getLogger('twitterChart');
 
 const tweetChart = (files, tweet, callback, inReplyToId) => {
   logger.debug(`Tweeting images from ${files}`);
-  if (!Array.isArray(files)) {
-    let newFiles = new Array();
-    newFiles.push(files);
-    files = newFiles;
-  }
-  let mediaIds = new Array();
-  files.forEach(function(file, index) { 
-    uploadMedia(file, function(mediaId) {
-      logger.debug(`Adding mediaId: ${mediaId}`);
-      mediaIds.push(mediaId);
-      if (mediaIds.length === files.length) {
-        logger.debug(`Media uploaded\tmediaIds: ${mediaIds}`);
-        updateStatus(tweet, mediaIds, callback, inReplyToId);
-      }
+  if (constants.debug) {
+      logger.info('Sending tweet');
+      callback(1);
+  } else {    
+    if (!Array.isArray(files)) {
+      let newFiles = new Array();
+      newFiles.push(files);
+      files = newFiles;
+    }
+    let mediaIds = new Array();
+    files.forEach(function(file, index) { 
+      uploadMedia(file, function(mediaId) {
+        logger.debug(`Adding mediaId: ${mediaId}`);
+        mediaIds.push(mediaId);
+        if (mediaIds.length === files.length) {
+          logger.debug(`Media uploaded\tmediaIds: ${mediaIds}`);
+          updateStatus(tweet, mediaIds, callback, inReplyToId);
+        }
+      });
     });
-  });
+  }
 };
 
 function uploadMedia(b64content, callback) {
