@@ -353,7 +353,7 @@ function generateConfiguration(labels, firstDose, secondDose, populationFirstDos
     }
   };
 }
-// /home/joe/Documents/workspace/github/covid19charts/vaccinations
+
 function generateDoughnutConfiguration(labels, firstDosePercentage, secondDosePercentage) {
   return {
     type: "doughnut",
