@@ -2,6 +2,7 @@ const { ChartJSNodeCanvas } = require('chartjs-node-canvas');
 const fs = require('fs');
 const fsPromises = require('fs').promises;
 const log4js = require("log4js");
+const Canvas = require("canvas");
 
 const constants = require("./constants");
 
@@ -14,6 +15,7 @@ const height = 900;
 const chartCallback = (ChartJS) => {
     // Global config example: https://www.chartjs.org/docs/latest/configuration/
     ChartJS.defaults.global.elements.rectangle.borderWidth = 2;
+    ChartJS.defaults.global.layout.padding.bottom = 50;
     // Global plugin example: https://www.chartjs.org/docs/latest/developers/plugins.html
     ChartJS.plugins.register({
         beforeDraw: function(chartInstance) {
@@ -29,6 +31,21 @@ const chartCallback = (ChartJS) => {
               e.fillStyle = 'rgba(63, 63, 191, 0.6)';
             }
           });        
+        },
+        afterDraw: function(chartInstance) {
+          let context = chartInstance.chart.ctx;
+          let canvas = context.canvas;
+
+          let cHeight = canvas.clientHeight || canvas.height;
+          let cWidth = canvas.clientWidth || canvas.width;
+
+          let watermark = new Canvas.Image;
+          watermark.src = fs.readFileSync('watermark.png');
+          context.save();
+
+          context.globalAlpha = 0.75;
+          context.drawImage(watermark, canvas.width - watermark.width, canvas.height - watermark.height);
+          context.restore();
         }
       });
     // New chart type example: https://www.chartjs.org/docs/latest/developers/charts.html
@@ -36,7 +53,7 @@ const chartCallback = (ChartJS) => {
         // chart implementation
     });
 };
-const chartJSNodeCanvas = new ChartJSNodeCanvas({ width, height, chartCallback });
+const chartJSNodeCanvas = new ChartJSNodeCanvas({ width, height, chartCallback});
 
 const writeChart = function(filename, configuration) {
   logger.info(`Creating chart at ${filename}`);
