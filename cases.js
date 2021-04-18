@@ -31,6 +31,7 @@ const totalCases = {
     yAxisID: "totalCasesAxis"
 };
 
+let covidData = '';
 const graphData = new Array();
 
 logger.info('Processing daily cases');
@@ -38,7 +39,7 @@ fs.readFile('./covid19dashboard/data.json', 'utf8', (err, data) => {
     if (err) {
         logger.error(`Error reading file from disk: ${err}`);
     } else {
-        const covidData = JSON.parse(data);
+        covidData = JSON.parse(data);
         let cases = [];
         let totalCases = 0;
         let dataFrom = new Date();
@@ -74,12 +75,26 @@ function processNewCases() {
         totalCases.data.push(value.totalCases);
     });
     let newCases = dailyCases.data[dailyCases.data.length - 1];
+    logger.debug(`${labels[labels.length - 1]}: ${newCases} new cases`);
+    // Array of objects where the number of new cases is less than today's new cases
+    let lessCases = covidData.filter(item => item.cases < newCases);
+    logger.debug(`Found ${lessCases.length} days with less cases`);
+    let dateDifference = 0;
+    if (lessCases.length > 0) {
+        // The last entry in the array, i.e. the last date with less cases than today
+        let lastDayLowCases = lessCases[lessCases.length - 1];
+        // The number of days since the above
+        let dateDifference = moment(newCases.date).diff(moment(lastDayLowCases.date), 'days');
+        logger.debug(`${dateDifference} days since a lower number of cases - ${lastDayLowCases.date}(${lastDayLowCases.cases})`);
+    }
     let previousDaysCases = dailyCases.data[dailyCases.data.length - 2];
     let change = newCases - previousDaysCases;
     let percentageChange = ((change * 100) / previousDaysCases).toFixed(2)
     let tweet = '🦠 Cases: Daily cases' + 
                 '\n' + moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM') + ': ' + newCases + 
 //                '\nTotal cases: ' + Number(totalCases.data[totalCases.data.length - 1]).toLocaleString('en') + 
+                // If it's been more than 30 days since a lower number of new cases, add that to the tweet
+                (dateDifference > 30 ? `\nLowest since ${moment(lastDayLowCases.date).format('dddd, Do MMMM')}(${lastDayLowCases.cases})`: '') +
                 '\n' +
                 '\n' + hashtag + 
                 '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=cases&dateSelection=lastTwoMonths&graphType=normal&displayType=graph&trendLine=true';
