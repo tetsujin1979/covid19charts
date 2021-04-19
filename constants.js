@@ -15,6 +15,11 @@ const loggerConfiguration = {
     }
 }
 
+const oneMonthAgo = new Date();
+oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+
 exports.days = days;
 exports.hashtag = hashtag;
 exports.loggerConfiguration = loggerConfiguration;
+exports.oneMonthAgo = oneMonthAgo;
+exports.debug = false;
