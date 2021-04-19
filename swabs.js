@@ -42,6 +42,8 @@ const percentagePositive = {
   type: "line"
 };
 
+const oneMonthAgo = constants.oneMonthAgo;
+
 logger.info('Processing daily swabs');
 fs.readFile('./covid19dashboard/data.json', 'utf8', (err, data) => {
   if (err) {
@@ -49,8 +51,6 @@ fs.readFile('./covid19dashboard/data.json', 'utf8', (err, data) => {
   } else {
     const covidData = JSON.parse(data);
     logger.debug(`Processing ${covidData.length} items`);
-    let dataFrom = new Date();
-    dataFrom.setMonth(dataFrom.getMonth() - 1);
     covidData.forEach(function(item, index) {
       if (item.hasOwnProperty("dateString") && item.hasOwnProperty("positiveSwabs") && item.hasOwnProperty("dailySwabs")) {
         let date = new Date(item.dateString);
@@ -61,9 +61,34 @@ fs.readFile('./covid19dashboard/data.json', 'utf8', (err, data) => {
           negativeSwabs: (item.dailySwabs - item.positiveSwabs),
           percentagePositive: percentagePositive
         }
-        if (date > dataFrom) {
-          graphData.push(swabData);
+        if (index > 7) {
+            let today = covidData[index];
+            let yesterday = covidData[index - 1];
+            let twoDaysAgo = covidData[index - 2];
+            let threeDaysAgo = covidData[index - 3];
+            let fourDaysAgo = covidData[index - 4];
+            let fiveDaysAgo = covidData[index - 5];
+            let sixDayAgo = covidData[index - 6];
+            let totalPositiveSwabs = today.positiveSwabs + yesterday.positiveSwabs + twoDaysAgo.positiveSwabs + threeDaysAgo.positiveSwabs + fourDaysAgo.positiveSwabs + fiveDaysAgo.positiveSwabs + sixDayAgo.positiveSwabs;
+            let totalNegativeSwabs = (today.dailySwabs - today.positiveSwabs) +
+                                     (yesterday.dailySwabs - yesterday.positiveSwabs) +
+                                     (twoDaysAgo.dailySwabs - twoDaysAgo.positiveSwabs) +
+                                     (threeDaysAgo.dailySwabs - threeDaysAgo.positiveSwabs) +
+                                     (fourDaysAgo.dailySwabs - fourDaysAgo.positiveSwabs) +
+                                     (fiveDaysAgo.dailySwabs - fiveDaysAgo.positiveSwabs) +
+                                     (sixDayAgo.dailySwabs - sixDayAgo.positiveSwabs);
+
+            let sevenDayTotalSwabs = totalPositiveSwabs + totalNegativeSwabs;
+            swabData.sevenDayAveragePositiveSwabs = (totalPositiveSwabs / 7).toFixed(2);
+            swabData.sevenDayAverageNegativeSwabs = (totalNegativeSwabs / 7).toFixed(2);
+            swabData.sevenDayAveragePercentagePositive = ((totalPositiveSwabs * 100) / sevenDayTotalSwabs).toFixed(2);
+            if (date.getDay() === 0) {
+                swabData.weeklyPositiveSwabs = totalPositiveSwabs;
+                swabData.weeklyNegativeSwabs = totalNegativeSwabs;
+                swabData.weeklyPercentagePositive = ((totalPositiveSwabs * 100) / (totalPositiveSwabs + totalNegativeSwabs));
+            }
         }
+        graphData.push(swabData);
       }
     });
     header = '📅 ' + moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM YYYY');
@@ -77,7 +102,8 @@ function processNewSwabs() {
   positiveSwabs.data = new Array();
   negativeSwabs.data = new Array();
   percentagePositive.data = new Array();
-  graphData.forEach(function(value, index) {
+  graphData.filter(item => item.date > oneMonthAgo)
+           .forEach(function(value, index) {
     labels.push(value.date.toDateString());
     positiveSwabs.data.push(value.positiveSwabs);
     negativeSwabs.data.push(value.negativeSwabs);
@@ -88,7 +114,7 @@ function processNewSwabs() {
   let dailyTotalSwabs = dailyPositiveSwabs + dailyNegativeSwabs;
   let dailyPercentagePositive = Number(percentagePositive.data[percentagePositive.data.length - 1]);
 
-  let tweet = '\n🧪 Swabs: Daily results' +
+  let tweet = '🧪 Swabs: Daily results' +
               '\n' + moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM YYYY') +
               '\nPositive: ' + dailyPositiveSwabs.toLocaleString('en') + '(' + dailyPercentagePositive + '%)' +
               '\nNegative: ' + dailyNegativeSwabs.toLocaleString('en') + '(' + (100 - dailyPercentagePositive) + '%)' +
@@ -109,7 +135,8 @@ function processSwabsByDay(lastTweetId) {
   positiveSwabs.data = new Array();
   negativeSwabs.data = new Array();
   percentagePositive.data = new Array();
-  graphData.forEach(function(value, index) {
+  graphData.filter(item => item.date > oneMonthAgo)
+           .forEach(function(value, index) {
     if (value.date.getDay() == lastDay) {
       labels.push(value.date.toDateString());
       positiveSwabs.data.push(value.positiveSwabs);
@@ -146,7 +173,7 @@ function processSwabsByDay(lastTweetId) {
 
   let configuration = generateConfiguration(labels, percentagePositive, positiveSwabs, negativeSwabs, "Swab Results By Day");
   let b64Content = chartHelper.writeChart('swabs/swabsByDay.png', configuration);
-  twitterChart.tweetChart(b64Content, tweet, function() {}, lastTweetId);
+  twitterChart.tweetChart(b64Content, tweet, processWeeklyTotals, lastTweetId);
 }
 
 function processRollingSevenDayAverage(inReplyToId) {
@@ -164,27 +191,19 @@ function processRollingSevenDayAverage(inReplyToId) {
     }
   }
   for (let counter = initialTestsIndex; counter < graphData.length; counter ++) {
-    let today = graphData[counter];
-    let yesterday = graphData[counter - 1];
-    let twoDaysAgo = graphData[counter - 2];
-    let threeDaysAgo = graphData[counter - 3];
-    let fourDaysAgo = graphData[counter - 4];
-    let fiveDaysAgo = graphData[counter - 5];
-    let sixDayAgo = graphData[counter - 6];
-    let totalPositiveSwabs = today.positiveSwabs + yesterday.positiveSwabs + twoDaysAgo.positiveSwabs + threeDaysAgo.positiveSwabs + fourDaysAgo.positiveSwabs + fiveDaysAgo.positiveSwabs + sixDayAgo.positiveSwabs;
-    let totalNegativeSwabs = today.negativeSwabs + yesterday.negativeSwabs + twoDaysAgo.negativeSwabs + threeDaysAgo.negativeSwabs + fourDaysAgo.negativeSwabs + fiveDaysAgo.negativeSwabs + sixDayAgo.negativeSwabs;
-    let dailySwabs = totalPositiveSwabs + totalNegativeSwabs;
-    labels.push('Seven days to '+ today.date.toDateString());
-    positiveSwabs.data.push((totalPositiveSwabs / 7).toFixed(2));
-    negativeSwabs.data.push((totalNegativeSwabs / 7).toFixed(2));
-    percentagePositive.data.push(((totalPositiveSwabs * 100) / dailySwabs).toFixed(2));
+    let value = graphData[counter];
+    if (value.date > oneMonthAgo) {
+      labels.push(value.date.toDateString());
+      positiveSwabs.data.push(value.sevenDayAveragePositiveSwabs);
+      negativeSwabs.data.push(value.sevenDayAverageNegativeSwabs);
+      percentagePositive.data.push(value.sevenDayAveragePercentagePositive);
+    }
   }
   let dailyPositiveSwabs = Number(positiveSwabs.data[positiveSwabs.data.length - 1]);
   let dailyNegativeSwabs = Number(negativeSwabs.data[negativeSwabs.data.length - 1]);
   let dailyTotalSwabs = dailyPositiveSwabs + dailyNegativeSwabs;
   let dailyPercentagePositive = Number(percentagePositive.data[percentagePositive.data.length - 1]);
-  let tweet = header + 
-              '\n🧪 Swabs: Seven day average' +
+  let tweet = '🧪 Swabs: Seven day average' +
               '\n' + moment(graphData[graphData.length - 1].date).format('ddd, Do MMM') +
               '\nPositive tests: ' + dailyPositiveSwabs.toLocaleString('en') + '(' + dailyPercentagePositive + '%)' +
               '\nNegative tests: ' + dailyNegativeSwabs.toLocaleString('en') + '(' + (100 - dailyPercentagePositive) + '%)' +
@@ -198,6 +217,38 @@ function processRollingSevenDayAverage(inReplyToId) {
   twitterChart.tweetChart(b64Content, tweet, processSwabsByDay, inReplyToId);
 }
 
+function processWeeklyTotals(inReplyToId) {
+  if (graphData[graphData.length - 1].date.getDay() === 0) {
+    logger.info("Processing weekly totals");
+    let labels = new Array();
+    positiveSwabs.data = new Array();
+    negativeSwabs.data = new Array();
+    percentagePositive.data = new Array();
+    let weeklyData = graphData.filter(item => item.date > oneMonthAgo && item.date.getDay() === 0);
+    weeklyData.forEach(function (item, index) { 
+      labels.push(`Week ending ` + item.date.toDateString());
+      positiveSwabs.data.push(item.weeklyPositiveSwabs);
+      negativeSwabs.data.push(item.weeklyNegativeSwabs);
+      percentagePositive.data.push(item.weeklyPercentagePositive);
+    });
+    let weeklyPositiveSwabs = Number(positiveSwabs.data[positiveSwabs.data.length - 1]);
+    let weeklyNegativeSwabs = Number(negativeSwabs.data[negativeSwabs.data.length - 1]);
+    let weeklyTotalSwabs = weeklyPositiveSwabs + weeklyNegativeSwabs;
+    let weeklyPercentagePositive = Number(percentagePositive.data[percentagePositive.data.length - 1]);
+    let tweet = '🧪 Swabs: Weekly total' +
+                '\n' + moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM YYYY') +
+                '\nPositive tests: ' + weeklyPositiveSwabs.toLocaleString('en') + '(' + weeklyPercentagePositive.toFixed(2) + '%)' +
+              '\nNegative tests: ' + weeklyNegativeSwabs.toLocaleString('en') + '(' + (100 - weeklyPercentagePositive).toFixed(2) + '%)' +
+              '\nTotal tests: ' + Number(weeklyTotalSwabs).toLocaleString('en') +
+              '\n' +
+              '\n' + hashtag +
+              '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=swabs&dateSelection=lastTwoMonths&graphType=rollingSevenDayAverage&displayType=graph&trendLine=false';
+
+    let configuration = generateConfiguration(labels, percentagePositive, positiveSwabs, negativeSwabs, "Seven Day Average Swab Results");
+    let b64Content = chartHelper.writeChart('swabs/weeklyTotals.png', configuration);
+    twitterChart.tweetChart(b64Content, tweet, function() {}, inReplyToId);
+  }  
+}
 /*
 function processSevenDayAverage(inReplyToId) {
   let labels = new Array();
