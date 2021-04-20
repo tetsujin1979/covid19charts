@@ -33,8 +33,7 @@ const totalCases = {
 let covidData = '';
 const graphData = new Array();
 
-const oneMonthAgo = new Date();
-oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+const oneMonthAgo = constants.oneMonthAgo;
 
 logger.info('Processing daily cases');
 fs.readFile('./covid19dashboard/data.json', 'utf8', (err, data) => {
