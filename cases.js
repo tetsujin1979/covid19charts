@@ -89,21 +89,37 @@ function processNewCases() {
     logger.debug(`${labels[labels.length - 1]}: ${newCases} new cases`);
     // Array of objects where the number of new cases is less than today's new cases
     let lessCases = covidData.filter(item => item.cases < newCases);
+    let higherCases = covidData.filter(item => item.cases > newCases);
     logger.debug(`Found ${lessCases.length} days with less cases`);
-    let dateDifference = 0;
+    logger.debug(`Found ${higherCases.length} days with more cases`);
     // An object for the last day with less cases than today
     let lastDayLessCases = {
         date: new Date(),   // The date
-        cases: 0            // The number of cases
+        cases: 0,           // The number of cases
+        dateDifference: 0   // The number of days since a lower number of cases
+    };
+    let lastDayMoreCases = {
+        date: new Date(),   // The date
+        cases: 0,           // The number of cases
+        dateDifference: 0   // The number of days since a lower number of cases
     };
     if (lessCases.length > 0) {
         // The last entry in the array, i.e. the last date with less cases than today
-        lastDayLowCases = lessCases[lessCases.length - 1];
+        let lastDayLowCases = lessCases[lessCases.length - 1];
         // The number of days since the above
         lastDayLessCases.date = new Date(lastDayLowCases.dateString);
         lastDayLessCases.cases = lastDayLowCases.cases;
-        dateDifference = moment(graphData[graphData.length - 1].date).diff(moment(lastDayLessCases.date), 'days');
-        logger.debug(`${dateDifference} days since a lower number of cases - ${lastDayLessCases.date}(${lastDayLessCases.cases})`);
+        lastDayLessCases.dateDifference = moment(graphData[graphData.length - 1].date).diff(moment(lastDayLessCases.date), 'days');
+        logger.debug(`${lastDayLessCases.dateDifference} days since a lower number of cases - ${lastDayLessCases.date}(${lastDayLessCases.cases})`);
+    }
+    if (higherCases.length > 0) {
+        // The last entry in the array, i.e. the last date with less cases than today
+        let lastDayHighCases = higherCases[higherCases.length - 1];
+        // The number of days since the above
+        lastDayMoreCases.date = new Date(lastDayHighCases.dateString);
+        lastDayMoreCases.cases = lastDayHighCases.cases;
+        lastDayMoreCases.dateDifference = moment(graphData[graphData.length - 1].date).diff(moment(lastDayHighCases.date), 'days');
+        logger.debug(`${lastDayHighCases.dateDifference} days since a lower number of cases - ${lastDayHighCases.date}(${lastDayHighCases.cases})`);
     }
     let previousDaysCases = dailyCases.data[dailyCases.data.length - 2];
     let change = newCases - previousDaysCases;
@@ -111,8 +127,10 @@ function processNewCases() {
     let tweet = '🦠 Cases: Daily cases' + 
                 '\n' + moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM') + ': ' + newCases + 
 //                '\nTotal cases: ' + Number(totalCases.data[totalCases.data.length - 1]).toLocaleString('en') + 
-                // If it's been more than 30 days since a lower number of new cases, add that to the tweet
-                (dateDifference > 30 ? `\nLowest since ${moment(lastDayLessCases.date).format('dddd, Do MMMM')}(${lastDayLessCases.cases})`: '') +
+                // If it's been more than 14 days since a lower number of new cases, add that to the tweet
+                (lastDayLessCases.dateDifference > 14 ? `\nLowest since ${moment(lastDayLessCases.date).format('dddd, Do MMMM')}(${lastDayLessCases.cases})`: '') +
+                // If it's been more than 14 days since a higher number of new cases, add that to the tweet
+                (lastDayMoreCases.dateDifference > 14 ? `\nHighest since ${moment(lastDayMoreCases.date).format('dddd, Do MMMM')}(${lastDayMoreCases.cases})`: '') +
                 '\n' +
                 '\n' + hashtag + 
                 '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=cases&dateSelection=lastTwoMonths&graphType=normal&displayType=graph&trendLine=true';
@@ -229,12 +247,13 @@ function processWeeklyCases(inReplyToId) {
         let previousWeeksCasesPercentageChange = ((previousWeeksCasesChange * 100) / previousWeeksCases).toFixed(2)
         let tweet = '🦠 Cases: Weekly total' +
                     '\nDate: Cases(Difference | % difference)' +
-                    '\n' + moment(weeklyData[weeklyData.length - 1].date).format('dddd, Do MMMM') + ': ' + newCases + 
-                    '\n' + moment(weeklyData[weeklyData.length - 2].date).format('dddd, Do MMMM') + ': ' + previousDaysCases + '(' + previousDaysCasesChange + ' | ' + previousDaysCasesPercentageChange + '%' + ')' +
-                    '\n' + moment(weeklyData[weeklyData.length - 3].date).format('dddd, Do MMMM') + ': ' + previousWeeksCases + '(' + previousWeeksCasesChange + ' | ' + previousWeeksCasesPercentageChange + '%' + ')' +
+                    '\n' + moment(weeklyData[weeklyData.length - 1].date).format('dddd, Do MMMM') + ': ' + newCases.toLocaleString('en') + 
+                    '\n' + moment(weeklyData[weeklyData.length - 2].date).format('dddd, Do MMMM') + ': ' + previousDaysCases.toLocaleString('en') + '(' + Number(previousDaysCasesChange) + ' | ' + previousDaysCasesPercentageChange + '%' + ')' +
+                    '\n' + moment(weeklyData[weeklyData.length - 3].date).format('dddd, Do MMMM') + ': ' + previousWeeksCases.toLocaleString('en') + '(' + Number(previousWeeksCasesChange) + ' | ' + previousWeeksCasesPercentageChange + '%' + ')' +
                     '\n' +
                     '\n' + hashtag +
                     '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=cases&dateSelection=lastTwoMonths&graphType=rollingSevenDayAverage&displayType=graph&trendLine=false';
+
         let configuration = generateConfiguration(labels, totalCases, dailyCases, "Weekly cases");
         let b64Content = chartHelper.writeChart('cases/weeklyCases.png', configuration);
         twitterChart.tweetChart(b64Content, tweet, function() { }, inReplyToId);        
