@@ -235,14 +235,24 @@ function processWeeklyTotals(inReplyToId) {
     let weeklyNegativeSwabs = Number(negativeSwabs.data[negativeSwabs.data.length - 1]);
     let weeklyTotalSwabs = weeklyPositiveSwabs + weeklyNegativeSwabs;
     let weeklyPercentagePositive = Number(percentagePositive.data[percentagePositive.data.length - 1]);
+
+    let previousWeeklyPositiveSwabs = Number(positiveSwabs.data[positiveSwabs.data.length - 2]);
+    let previousWeeklyNegativeSwabs = Number(negativeSwabs.data[negativeSwabs.data.length - 2]);
+    let previousWeeklyTotalSwabs = previousWeeklyPositiveSwabs + previousWeeklyNegativeSwabs;
+    let previousWeeklyPercentagePositive = Number(percentagePositive.data[percentagePositive.data.length - 2]);
+
     let tweet = '🧪 Swabs: Weekly total' +
-                '\n' + moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM YYYY') +
-                '\nPositive tests: ' + weeklyPositiveSwabs.toLocaleString('en') + '(' + weeklyPercentagePositive.toFixed(2) + '%)' +
-              '\nNegative tests: ' + weeklyNegativeSwabs.toLocaleString('en') + '(' + (100 - weeklyPercentagePositive).toFixed(2) + '%)' +
-              '\nTotal tests: ' + Number(weeklyTotalSwabs).toLocaleString('en') +
-              '\n' +
-              '\n' + hashtag +
-              '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=swabs&dateSelection=lastTwoMonths&graphType=rollingSevenDayAverage&displayType=graph&trendLine=false';
+                '\n' + moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM') +
+                '\nPositive: ' + weeklyPositiveSwabs.toLocaleString('en') + '(' + weeklyPercentagePositive.toFixed(2) + '%)' +
+                '\nNegative: ' + weeklyNegativeSwabs.toLocaleString('en') + '(' + (100 - weeklyPercentagePositive).toFixed(2) + '%)' +
+                '\nTotal: ' + Number(weeklyTotalSwabs).toLocaleString('en') +
+                '\n' +
+                '\n' + moment(graphData[graphData.length - 8].date).format('dddd, Do MMMM') +
+                '\nPositive: ' + previousWeeklyPositiveSwabs.toLocaleString('en') + '(' + previousWeeklyPercentagePositive.toFixed(2) + '%)' +
+                '\nNegative: ' + previousWeeklyNegativeSwabs.toLocaleString('en') + '(' + (100 - previousWeeklyPercentagePositive).toFixed(2) + '%)' +
+                '\nTotal: ' + Number(previousWeeklyTotalSwabs).toLocaleString('en') +
+                '\n' + hashtag +
+                '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=swabs&dateSelection=lastTwoMonths&graphType=rollingSevenDayAverage&displayType=graph&trendLine=false';
 
     let configuration = generateConfiguration(labels, percentagePositive, positiveSwabs, negativeSwabs, "Seven Day Average Swab Results");
     let b64Content = chartHelper.writeChart('swabs/weeklyTotals.png', configuration);
