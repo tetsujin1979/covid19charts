@@ -145,9 +145,9 @@ logger.info('Processing daily vaccinations');
 
   let tweet = '💉 Vaccinations: Daily doses' +
               '\n' + moment(finalEntry.date).format('dddd, Do MMMM') + 
-              '\n1st dose: ' + Number(dailyFirstDose).toLocaleString('en') + (isRecordFirstDose ? '(New Record!)' : '') +
-              '\n2nd dose: ' + Number(dailySecondDose).toLocaleString('en') + (isRecordSecondDose ? '(New Record!)' : '') +
-              '\nTotal doses: ' + Number(dailyFirstDose + dailySecondDose).toLocaleString('en') + (isRecordDailyTotalDoses ? '(New Record!)' : '') +
+              '\n1st dose: ' + Number(dailyFirstDose).toLocaleString('en') + (isRecordFirstDose ? '(🥇 New Record!)' : '') +
+              '\n2nd dose: ' + Number(dailySecondDose).toLocaleString('en') + (isRecordSecondDose ? '(🥇 New Record!)' : '') +
+              '\nTotal: ' + Number(dailyFirstDose + dailySecondDose).toLocaleString('en') + (isRecordDailyTotalDoses ? '(🥇 New Record!)' : '') +
               '\n' +
               '\nTotal 1st dose: ' + Number(totalFirstDose).toLocaleString('en') + '(' + finalEntry.over16FirstDosePercentage + '% of 16+)' +
               '\nTotal 2nd dose: ' + Number(totalSecondDose).toLocaleString('en') + '(' + finalEntry.over16SecondDosePercentage + '% of 16+)' +
@@ -173,15 +173,13 @@ function processVaccinationsByDay(lastTweetId) {
   over16FirstDosePercentage.data = new Array();
   over16SecondDosePercentage.data = new Array();
 
-  graphData.filter(item => item.date > oneMonthAgo)
+  graphData.filter(item => item.date > oneMonthAgo && item.date.getDay() == day)
            .forEach(function(value, index) {
-    if(value.date.getDay() == day) {
       labels.push(value.date.toDateString());
       firstDose.data.push(value.firstDose);
       secondDose.data.push(value.secondDose);
       over16FirstDosePercentage.data.push(value.totalFirstDose);
       over16SecondDosePercentage.data.push(value.totalSecondDose);
-    }
   });
   let previousDay = moment(graphData[graphData.length - 8].date).format('ddd, Do MMMM');
   let dailyFirstDose = firstDose.data[firstDose.data.length - 1];
@@ -198,16 +196,16 @@ function processVaccinationsByDay(lastTweetId) {
 
   let tweet = '💉 Vaccinations: By day' +
               '\n' + moment(graphData[graphData.length - 1].date).format('ddd, Do MMMM') + 
-              '\n1st dose: ' + Number(dailyFirstDose).toLocaleString('en') +
-              '\n2nd dose: ' + Number(dailySecondDose).toLocaleString('en') +
-              '\nTotal: ' + Number(dailyFirstDose + dailySecondDose).toLocaleString('en') +
-              '\n' +
+              '\n1st dose: ' + Number(dailyFirstDose).toLocaleString('en') + 
+              '\n2nd dose: ' + Number(dailySecondDose).toLocaleString('en') + 
+              '\nTotal: ' + Number(dailyFirstDose + dailySecondDose).toLocaleString('en') + 
+              '\n' + 
               '\n' + previousDay +
-              '\nDoses(Difference | % difference)' + 
+              '\nDoses(Diff | % diff)' + 
               '\n1st dose: ' + Number(previousFirstDose).toLocaleString('en') + '(' + (firstDoseChange > 0 ? '+' : '') + (firstDoseChange).toLocaleString('en') + ' | ' + ((firstDoseChange * 100) / previousFirstDose).toFixed(2) + '%)' +
               '\n2nd dose: ' + Number(previousSecondDose).toLocaleString('en') + '(' + (secondDoseChange > 0 ? '+' : '') + (secondDoseChange).toLocaleString('en') + ' | ' + ((secondDoseChange * 100) / previousSecondDose).toFixed(2) + '%)' +
               '\nTotal: ' + Number(previousFirstDose + previousSecondDose).toLocaleString('en') + '(' + (totalDosesChange > 0 ? '+' : '') + (totalDosesChange).toLocaleString('en') + ' | ' + ((totalDosesChange * 100) / (previousFirstDose + previousSecondDose)).toFixed(2) + '%)' +
-              '\n' +
+              '\n' + 
               '\n' + hashtag +
               '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=vaccinations&dateSelection=lastTwoMonths&graphType=byWeekday&day=' + day + '&displayType=graph&trendLine=false';
 
