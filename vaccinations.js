@@ -14,7 +14,7 @@ const logger = log4js.getLogger('vaccinations');
 const hashtag = constants.hashtag;
 
 const population = 4977400;
-const over16 = 3863147;
+const over16 = 3909626;
 
 const graphData = new Array();
 const oneMonthAgo = constants.oneMonthAgo;
