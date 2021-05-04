@@ -315,7 +315,7 @@ function processWeeklyCases(inReplyToId) {
               '\n' + hashtag +
               '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=vaccinations&dateSelection=lastTwoMonths&graphType=weeklyTotal&displayType=graph&trendLine=false';
 
-    let configuration = generateConfiguration(labels, firstDose, secondDose, over16FirstDosePercentage, over16SecondDosePercentage, "Seven Day Average Vaccinations");
+    let configuration = generateConfiguration(labels, firstDose, secondDose, over16FirstDosePercentage, over16SecondDosePercentage, "Weekly Vaccination Totals");
     let b64Content = chartHelper.writeChart('vaccinations/weeklyTotals.png', configuration);
     twitterChart.tweetChart(b64Content, tweet, function() { }, inReplyToId);        
 
