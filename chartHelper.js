@@ -37,6 +37,9 @@ const chartCallback = (ChartJS) => {
             if (e.text === 'Second Dose') {
               e.fillStyle = 'rgba(63, 63, 191, 0.6)';
             }
+            if (e.text === 'Single Dose') {
+              e.fillStyle = 'rgba(150, 81, 159, 0.6)';
+            }
           });        
         },
         afterDraw: function(chartInstance) {
