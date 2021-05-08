@@ -13,7 +13,7 @@ const tweetChart = (files, tweet, callback, inReplyToId) => {
   logger.debug(`Tweeting images from ${files}`);
   if (constants.debug) {
       logger.info('Sending tweet');
-      logger.debug(`Tweet\t${tweet.length} characters\n${tweet}\n`);
+      logger.debug(`Tweet: ${tweet.length} characters\n${tweet}\n`);
       callback(1);
   } else {    
     if (!Array.isArray(files)) {
@@ -56,7 +56,7 @@ function updateStatus(tweet, mediaIds, callback, inReplyToId) {
       // Post a tweet with the newly uploaded media
       let params = { status: tweet, media_ids: mediaIds};
       logger.info('Sending tweet');
-      logger.debug(`Tweet\t${tweet.length} characters\n${tweet}\n`);
+      logger.debug(`Tweet: ${tweet.length} characters\n${tweet}\n`);
       if (inReplyToId) {
         params.in_reply_to_status_id = inReplyToId;
       }
