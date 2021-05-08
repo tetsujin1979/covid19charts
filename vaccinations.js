@@ -14,7 +14,7 @@ const logger = log4js.getLogger('vaccinations');
 const hashtag = constants.hashtag;
 
 const population = 4977400;
-const over16 = 3863147;
+const over16 = 3909626;
 
 const graphData = new Array();
 const oneMonthAgo = constants.oneMonthAgo;
@@ -358,7 +358,7 @@ function processWeeklyCases(inReplyToId) {
               '\n' + hashtag +
               '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=vaccinations&dateSelection=lastTwoMonths&graphType=weeklyTotal&displayType=graph&trendLine=false';
 
-    let configuration = generateConfiguration(labels, firstDose, secondDose, over16TotalFirstDoses, over16TotalSecondDoses, "Seven Day Average Vaccinations");
+    let configuration = generateConfiguration(labels, firstDose, secondDose, over16FirstDosePercentage, over16SecondDosePercentage, "Weekly Vaccination Totals");
     let b64Content = chartHelper.writeChart('vaccinations/weeklyTotals.png', configuration);
     twitterChart.tweetChart(b64Content, tweet, function() { }, inReplyToId);        
 
