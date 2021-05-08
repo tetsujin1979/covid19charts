@@ -282,7 +282,7 @@ function processRollingSevenDayAverage(inReplyToId) {
   let sevenDayAverageSingleDose = Number(singleDose.data[singleDose.data.length - 1]);
   let sevenDayAverageTotalDose = sevenDayAverageFirstDose + sevenDayAverageSecondDose + sevenDayAverageSingleDose;
 
-  let firstDosesOver16Remaining = over16 - finalEntry.totalFirstDose;
+  let firstDosesOver16Remaining = over16 - (finalEntry.totalFirstDose + finalEntry.totalSingleDose);
   let estimatedDaysToTotalFirstDose = (firstDosesOver16Remaining / sevenDayAverageFirstDose);
 
   let secondDosesAdministered = sevenDayAverageSecondDose * estimatedDaysToTotalFirstDose;
