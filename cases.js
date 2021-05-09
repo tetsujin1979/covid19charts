@@ -88,8 +88,8 @@ function processNewCases() {
     let newCases = dailyCases.data[dailyCases.data.length - 1];
     logger.debug(`${labels[labels.length - 1]}: ${newCases} new cases`);
     // Array of objects where the number of new cases is less than today's new cases
-    let lessCases = covidData.filter(item => item.cases < newCases);
-    let higherCases = covidData.filter(item => item.cases > newCases);
+    let lessCases = graphData.filter(item => item.cases < newCases);
+    let higherCases = graphData.filter(item => item.cases > newCases);
     logger.debug(`Found ${lessCases.length} days with less cases`);
     logger.debug(`Found ${higherCases.length} days with more cases`);
     // An object for the last day with less cases than today
@@ -107,19 +107,19 @@ function processNewCases() {
         // The last entry in the array, i.e. the last date with less cases than today
         let lastDayLowCases = lessCases[lessCases.length - 1];
         // The number of days since the above
-        lastDayLessCases.date = new Date(lastDayLowCases.dateString);
+        lastDayLessCases.date = lastDayLowCases.date;
         lastDayLessCases.cases = lastDayLowCases.cases;
         lastDayLessCases.dateDifference = moment(graphData[graphData.length - 1].date).diff(moment(lastDayLessCases.date), 'days');
         logger.debug(`${lastDayLessCases.dateDifference} days since a lower number of cases - ${lastDayLessCases.date}(${lastDayLessCases.cases})`);
     }
     if (higherCases.length > 0) {
-        // The last entry in the array, i.e. the last date with less cases than today
-        let lastDayHighCases = higherCases[higherCases.length - 1];
+        // The last entry in the array, i.e. the last date with more cases than today
+        let lastWeekHighCases = higherCases[higherCases.length - 1];
         // The number of days since the above
-        lastDayMoreCases.date = new Date(lastDayHighCases.dateString);
-        lastDayMoreCases.cases = lastDayHighCases.cases;
-        lastDayMoreCases.dateDifference = moment(graphData[graphData.length - 1].date).diff(moment(lastDayHighCases.date), 'days');
-        logger.debug(`${lastDayHighCases.dateDifference} days since a lower number of cases - ${lastDayHighCases.date}(${lastDayHighCases.cases})`);
+        lastDayMoreCases.date = lastWeekHighCases.date;
+        lastDayMoreCases.cases = lastWeekHighCases.cases;
+        lastDayMoreCases.dateDifference = moment(graphData[graphData.length - 1].date).diff(moment(lastWeekHighCases.date), 'days');
+        logger.debug(`${lastDayMoreCases.dateDifference} days since a higher number of cases - ${lastWeekHighCases.date}(${lastWeekHighCases.cases})`);
     }
     let previousDaysCases = dailyCases.data[dailyCases.data.length - 2];
     let change = newCases - previousDaysCases;
@@ -237,7 +237,41 @@ function processWeeklyCases(inReplyToId) {
             totalCases.data.push(value.totalCases);
         });
         let newCases = dailyCases.data[dailyCases.data.length - 1];
+        let lessCases = graphData.filter(item => item.date.getDay() === 0 && item.weeklyCases < newCases);
+        let higherCases = graphData.filter(item => item.date.getDay() === 0 && item.weeklyCases > newCases);
 
+        logger.debug(`Found ${lessCases.length} weeks with less cases`);
+        logger.debug(`Found ${higherCases.length} weeks with more cases`);
+        // An object for the last day with less cases than today
+        let lastWeekLessCases = {
+            date: new Date(),   // The date
+            cases: 0,           // The number of cases
+            dateDifference: 0   // The number of days since a lower number of cases
+        };
+        let lastWeekMoreCases = {
+            date: new Date(),   // The date
+            cases: 0,           // The number of cases
+            dateDifference: 0   // The number of days since a lower number of cases
+        };
+        if (lessCases.length > 0) {
+            // The last entry in the array, i.e. the last date with less cases than today
+            let lastDayLowCases = lessCases[lessCases.length - 1];
+            // The number of days since the above
+            lastWeekLessCases.date = lastDayLowCases.date;
+            lastWeekLessCases.weeklyCases = lastDayLowCases.weeklyCases;
+            lastWeekLessCases.dateDifference = moment(graphData[graphData.length - 1].date).diff(moment(lastWeekLessCases.date), 'weeks');
+            logger.debug(`${lastWeekLessCases.dateDifference} weeks since a lower number of weekly cases - ${lastWeekLessCases.date}(${lastWeekLessCases.weeklyCases})`);
+        }
+        if (higherCases.length > 0) {
+            // The last entry in the array, i.e. the last date with more cases than today
+            let lastWeekHighCases = higherCases[higherCases.length - 1];
+            // The number of days since the above
+            lastWeekMoreCases.date = lastWeekHighCases.date;
+            lastWeekMoreCases.weeklyCases = lastWeekHighCases.weeklyCases;
+            lastWeekMoreCases.dateDifference = moment(graphData[graphData.length - 1].date).diff(moment(lastWeekHighCases.date), 'weeks');
+            logger.debug(`${lastWeekMoreCases.dateDifference} days since a higher number of cases - ${lastWeekMoreCases.date}(${lastWeekMoreCases.weeklyCases})`);
+        }
+        
         let previousDaysCases = dailyCases.data[dailyCases.data.length - 2];
         let previousDaysCasesChange = Number(newCases - previousDaysCases).toFixed(2);
         let previousDaysCasesPercentageChange = ((previousDaysCasesChange * 100) / previousDaysCases).toFixed(2)
@@ -248,6 +282,8 @@ function processWeeklyCases(inReplyToId) {
         let tweet = '🦠 Cases: Weekly total' +
                     '\nDate: Cases(Difference | % difference)' +
                     '\n' + moment(weeklyData[weeklyData.length - 1].date).format('dddd, Do MMMM') + ': ' + newCases.toLocaleString('en') + 
+                    ((lastWeekLessCases.dateDifference > 3) ? `${lastWeekLessCases.dateDifference} weeks since a lower number of cases(${lastWeekLessCases.weeklyCases})` : '') +
+                    ((lastWeekMoreCases.dateDifference > 3) ? `${lastWeekMoreCases.dateDifference} weeks since a higher number of cases(${lastWeekMoreCases.weeklyCases})` : '') +
                     '\n' + moment(weeklyData[weeklyData.length - 2].date).format('dddd, Do MMMM') + ': ' + previousDaysCases.toLocaleString('en') + '(' + Number(previousDaysCasesChange) + ' | ' + previousDaysCasesPercentageChange + '%' + ')' +
                     '\n' + moment(weeklyData[weeklyData.length - 3].date).format('dddd, Do MMMM') + ': ' + previousWeeksCases.toLocaleString('en') + '(' + Number(previousWeeksCasesChange) + ' | ' + previousWeeksCasesPercentageChange + '%' + ')' +
                     '\n' +
