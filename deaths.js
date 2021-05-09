@@ -152,14 +152,14 @@ function processWeeklyDeaths(inReplyToId) {
     let previousWeeksDeathsChange = Number(newDeaths - previousWeeksDeaths).toFixed(2);
     let previousWeeksDeathsPercentageChange = ((previousWeeksDeathsChange * 100) / previousWeeksDeaths).toFixed(2);
 
-    let lastDayMoreDeathsDate = moment(lastDayMoreDeaths.date).format('dddd, Do MMMM');
-    let lastDayLessDeathsDate = moment(lastDayLessDeaths.date).format('dddd, Do MMMM');
+    let lastDayMoreDeathsDate = moment(lastDayMoreDeaths.date).format('dddd, Do MMMM YYYY');
+    let lastDayLessDeathsDate = moment(lastDayLessDeaths.date).format('dddd, Do MMMM YYYY');
 
     let tweet = 'Deaths: Weekly totals' +
                 '\nDate: Deaths(Difference | % difference)' +
                 '\n' + moment(weeklyData[weeklyData.length - 1].date).format('dddd, Do MMMM') + ': ' + newDeaths.toLocaleString('en') + 
-                (lastDayMoreDeaths.weeksDifference > 4 ? `(Highest since week ending ${lastDayMoreDeathsDate}(${lastDayMoreDeaths.weeklyDeaths} deaths))` : '') +
-                (lastDayLessDeaths.weeksDifference > 4 ? `(Lowest since week ending ${lastDayLessDeathsDate}(${lastDayLessDeaths.weeklyDeaths} deaths))` : '') +
+                (lastDayMoreDeaths.weeksDifference > 3 ? `(🔼 Highest since week ending ${lastDayMoreDeathsDate}(${lastDayMoreDeaths.weeklyDeaths}))` : '') +
+                (lastDayLessDeaths.weeksDifference > 3 ? `(🔽 Lowest since week ending ${lastDayLessDeathsDate}(${lastDayLessDeaths.weeklyDeaths}))` : '') +
                 '\n' + moment(weeklyData[weeklyData.length - 2].date).format('dddd, Do MMMM') + ': ' + previousDaysDeaths.toLocaleString('en') + '(' + Number(previousDaysDeathsChange) + ' | ' + previousDaysDeathsPercentageChange + '%' + ')' +
                 '\n' + moment(weeklyData[weeklyData.length - 3].date).format('dddd, Do MMMM') + ': ' + previousWeeksDeaths.toLocaleString('en') + '(' + Number(previousWeeksDeathsChange) + ' | ' + previousWeeksDeathsPercentageChange + '%' + ')' +
   //            '\nTotal deaths: ' + Number(totalDeaths.data[totalDeaths.data.length - 2]).toLocaleString('en') +
