@@ -124,7 +124,7 @@ function processWeeklyDeaths(inReplyToId) {
     let newDeaths = dailyDeaths.data[dailyDeaths.data.length - 1];
     let lessDeaths = graphData.filter(item => item.date.getDay() === 0 && item.weeklyDeaths < newDeaths);
     let higherDeaths = graphData.filter(item => item.date.getDay() === 0 && item.weeklyDeaths > newDeaths);
-    logger.debug(`Found ${lessDeaths.length} weekes with less deaths`);
+    logger.debug(`Found ${lessDeaths.length} weeks with less deaths`);
     logger.debug(`Found ${higherDeaths.length} weeks with more deaths`);
     if (lessDeaths.length > 0) {
         // The last entry in the array, i.e. the last date with less cases than today
