@@ -8,6 +8,8 @@ const constants = require("./constants");
 
 const days = constants.days;
 
+const newRecord = '(🥇 New Record!)';
+
 log4js.configure(constants.loggerConfiguration);
 const logger = log4js.getLogger('vaccinations');
 
@@ -135,6 +137,7 @@ fs.readFile('./covid19dashboard/data.json', 'utf8', (err, data) => {
             vaccinatedData.weeklyFirstDoses = sevenDayTotalFirstDoses;
             vaccinatedData.weeklySecondDoses = sevenDayTotalSecondDoses;
             vaccinatedData.weeklySingleDoses = sevenDayTotalSingleDoses;
+            vaccinatedData.weeklyTotalDoses = sevenDayTotalFirstDoses + sevenDayTotalSecondDoses + sevenDayTotalSingleDoses;
           }
 
         }
@@ -180,10 +183,10 @@ function processNewVaccinations() {
 
   let tweet = '💉 Vaccinations' +
               '\n' + moment(finalEntry.date).format('dddd, Do MMMM') + 
-              '\n1st dose: ' + Number(dailyFirstDose).toLocaleString('en') + (isRecordFirstDose ? '(🥇 New Record!)' : '') +
-              '\n2nd dose: ' + Number(dailySecondDose).toLocaleString('en') + (isRecordSecondDose ? '(🥇 New Record!)' : '') +
+              '\n1st dose: ' + Number(dailyFirstDose).toLocaleString('en') + (isRecordFirstDose ? newRecord : '') +
+              '\n2nd dose: ' + Number(dailySecondDose).toLocaleString('en') + (isRecordSecondDose ? newRecord : '') +
               ((dailySingleDose > 0) ? '\nSingle dose: ' + Number(dailySingleDose).toLocaleString('en') : '') +
-              '\nTotal: ' + Number(finalEntry.totalDailyDoses).toLocaleString('en') + (isRecordDailyTotalDoses ? '(🥇 New Record!)' : '') +
+              '\nTotal: ' + Number(finalEntry.totalDailyDoses).toLocaleString('en') + (isRecordDailyTotalDoses ? newRecord : '') +
               '\n' +
               '\nTotals' +
               '\n1st dose: ' + Number(totalFirstDose).toLocaleString('en') + '(' + finalEntry.over16TotalFirstDoses + '% of 16+)' +
@@ -192,7 +195,7 @@ function processNewVaccinations() {
               '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=vaccinations&dateSelection=lastTwoMonths&graphType=normal&displayType=graph&trendLine=false';
 
   let b64Content = new Array();
-  let configuration = generateConfiguration(labels, firstDose, secondDose, over16TotalFirstDoses, over16TotalSecondDoses, "Daily Vaccinations");
+  let configuration = generateConfiguration(labels, firstDose, secondDose, singleDose, over16TotalFirstDoses, over16TotalSecondDoses, over16TotalSingleDoses, "Daily Vaccinations");
   b64Content.push(chartHelper.writeChart('vaccinations/dailyVaccinations.png', configuration));
   configuration = generateDoughnutConfiguration(labels, finalEntry.over16TotalFirstDoses, finalEntry.over16TotalSecondDoses, finalEntry.over16TotalSingleDoses);
   b64Content.push(chartHelper.writeChart('vaccinations/vaccinationProgress.png', configuration));
@@ -248,7 +251,7 @@ function processVaccinationsByDay(lastTweetId) {
               '\n' + hashtag +
               '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=vaccinations&dateSelection=lastTwoMonths&graphType=byWeekday&day=' + day + '&displayType=graph&trendLine=false';
 
-  let configuration = generateConfiguration(labels, firstDose, secondDose, over16TotalFirstDoses, over16TotalSecondDoses, "Vaccinations By Day - " + days[day]);
+  let configuration = generateConfiguration(labels, firstDose, secondDose, singleDose, over16TotalFirstDoses, over16TotalSecondDoses, over16TotalSingleDoses, "Vaccinations By Day - " + days[day]);
   let b64Content = chartHelper.writeChart('vaccinations/byDay.png', configuration);
   twitterChart.tweetChart(b64Content, tweet, processWeeklyCases, lastTweetId);
 }
@@ -309,7 +312,7 @@ function processRollingSevenDayAverage(inReplyToId) {
               '\n' + hashtag +
               '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=vaccinations&dateSelection=lastTwoMonths&graphType=rollingSevenDayAverage&displayType=graph&trendLine=false';
 
-  let configuration = generateConfiguration(labels, firstDose, secondDose, over16TotalFirstDoses, over16TotalSecondDoses, "Seven Day Average Vaccinations");
+  let configuration = generateConfiguration(labels, firstDose, secondDose, singleDose, over16TotalFirstDoses, over16TotalSecondDoses, over16TotalSingleDoses, "Seven Day Average Vaccinations");
   let b64Content = chartHelper.writeChart('vaccinations/processRollingSevenDayAverage.png', configuration);
   twitterChart.tweetChart(b64Content, tweet, processVaccinationsByDay, inReplyToId);
 }
@@ -326,17 +329,20 @@ function processWeeklyCases(inReplyToId) {
       singleDose.data.push(value.weeklySingleDoses);
       over16TotalFirstDoses.data.push(value.totalFirstDose);
       over16TotalSecondDoses.data.push(value.totalSecondDose);
-      over16TotalSingleDoses.data.push(today.totalSingleDose);
+      over16TotalSingleDoses.data.push(value.totalSingleDose);
     });
     let weeklyFirstDose = firstDose.data[firstDose.data.length - 1];
     let weeklySecondDose = secondDose.data[secondDose.data.length - 1];
     let weeklySingleDose = singleDose.data[singleDose.data.length - 1];
-    let weeklyTotal = weeklyFirstDose + weeklySecondDose + singleDose;
+    let weeklyTotal = weeklyData[weeklyData.length - 1].weeklyTotalDoses;
+
+    let higherWeeklyTotal = weeklyData.reduce(function(prev, current) { return (prev.weeklyTotalDoses > current.weeklyTotalDoses) ? prev : current  });
+    let isRecordWeeklyTotal = higherWeeklyTotal.date === weeklyData[weeklyData.length - 1].date;
 
     let previousWeeksFirstDose = firstDose.data[firstDose.data.length - 2];
     let previousWeeksSecondDose = secondDose.data[secondDose.data.length - 2];
     let previousWeeksSingleDose = singleDose.data[singleDose.data.length - 2];
-    let previousWeeksTotal = previousWeeksFirstDose + previousWeeksSecondDose + previousWeeksSingleDose;
+    let previousWeeksTotal = weeklyData[weeklyData.length - 2].weeklyTotalDoses;
 
     let firstDoseDifference = weeklyFirstDose - previousWeeksFirstDose;
     let secondDoseDifference = weeklySecondDose - previousWeeksSecondDose;
@@ -347,18 +353,19 @@ function processWeeklyCases(inReplyToId) {
               '\n' + moment(weeklyData[weeklyData.length - 1].date).format('dddd, Do MMMM') + 
               '\n1st dose: ' + Number(weeklyFirstDose).toLocaleString('en') + 
               '\n2nd dose: ' + Number(weeklySecondDose).toLocaleString('en') + 
-              (weeklySingleDose > 0 ? 'Single dose: ' + Number(weeklySingleDose).toLocaleString('en') : '') +
-              '\nTotal: ' + Number(weeklyTotal).toLocaleString('en') +
+              (weeklySingleDose > 0 ? '\nSingle dose: ' + Number(weeklySingleDose).toLocaleString('en') : '') +
+              '\nTotal: ' + Number(weeklyTotal).toLocaleString('en') + (isRecordWeeklyTotal ? newRecord : '') +
               '\n' +
               '\n' + moment(weeklyData[weeklyData.length - 2].date).format('dddd, Do MMMM') + 
               '\n1st dose: ' + Number(previousWeeksFirstDose).toLocaleString('en') + '(' + (firstDoseDifference > 0 ? '+' : '') + Number(firstDoseDifference).toLocaleString('en') + ')' +
               '\n2nd dose: ' + Number(previousWeeksSecondDose).toLocaleString('en') + '(' + (secondDoseDifference > 0 ? '+' : '') + Number(secondDoseDifference).toLocaleString('en') + ')' +
               (previousWeeksSingleDose > 0 ? 'Single dose: ' + Number(previousWeeksSingleDose).toLocaleString('en') + '(' + (singleDoseDifference > 0 ? '+' : '') + Number(singleDoseDifference).toLocaleString('en') + ')': '') +
-              '\nTotal: ' + Number(previousWeeksTotal).toLocaleString('en') + '(' + (totalDifference > 0 ? '+' : '') + totalDifference + ')' + 
+              '\nTotal: ' + Number(previousWeeksTotal).toLocaleString('en') + '(' + (totalDifference > 0 ? '+' : '') + Number(totalDifference).toLocaleString('en') + ')' + 
               '\n' + hashtag +
               '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=vaccinations&dateSelection=lastTwoMonths&graphType=weeklyTotal&displayType=graph&trendLine=false';
 
-    let configuration = generateConfiguration(labels, firstDose, secondDose, over16FirstDosePercentage, over16SecondDosePercentage, "Weekly Vaccination Totals");
+    let configuration = generateConfiguration(labels, firstDose, secondDose, singleDose, over16TotalFirstDoses, over16TotalSecondDoses, over16TotalSingleDoses, "Weekly Vaccination Totals");
+    over16TotalSingleDoses
     let b64Content = chartHelper.writeChart('vaccinations/weeklyTotals.png', configuration);
     twitterChart.tweetChart(b64Content, tweet, function() { }, inReplyToId);        
 
@@ -420,7 +427,7 @@ function processSevenDayAverage(inReplyToId) {
 }
 */
 
-function generateConfiguration(labels, firstDose, secondDose, over16TotalFirstDoses, over16TotalSecondDoses, title) {
+function generateConfiguration(labels, firstDose, secondDose, singleDose, over16TotalFirstDoses, over16TotalSecondDoses, over16TotalSingleDoses, title) {
   return {
     type: "bar",
     data: {
