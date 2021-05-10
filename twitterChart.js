@@ -12,7 +12,7 @@ const logger = log4js.getLogger('twitterChart');
 const tweetChart = (files, tweet, callback, inReplyToId) => {
   logger.debug(`Tweeting images from ${files}`);
   if (constants.debug) {
-      logger.info('Sending tweet');
+      logger.info('DEBUG enabled - not sending tweet');
       logger.debug(`Tweet: ${tweet.length} characters\n${tweet}\n`);
       callback(1);
   } else {    
