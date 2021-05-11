@@ -3,7 +3,7 @@ const moment = require('moment');
 const log4js = require("log4js");
 
 const chartHelper = require("./chartHelper");
-const twitterChart = require("./twitterChart");
+const twitterHelper = require("./twitterHelper");
 const constants = require("./constants");
 
 const days = constants.days;
@@ -199,7 +199,7 @@ function processNewVaccinations() {
   b64Content.push(chartHelper.writeChart('vaccinations/dailyVaccinations.png', configuration));
   configuration = generateDoughnutConfiguration(labels, finalEntry.over16TotalFirstDoses, finalEntry.over16TotalSecondDoses, finalEntry.over16TotalSingleDoses);
   b64Content.push(chartHelper.writeChart('vaccinations/vaccinationProgress.png', configuration));
-  twitterChart.tweetChart(b64Content, tweet, processRollingSevenDayAverage);
+  twitterHelper.tweetChart(b64Content, tweet, processRollingSevenDayAverage);
 }
 
 function processVaccinationsByDay(lastTweetId) {
@@ -253,7 +253,7 @@ function processVaccinationsByDay(lastTweetId) {
 
   let configuration = generateConfiguration(labels, firstDose, secondDose, singleDose, over16TotalFirstDoses, over16TotalSecondDoses, over16TotalSingleDoses, "Vaccinations By Day - " + days[day]);
   let b64Content = chartHelper.writeChart('vaccinations/byDay.png', configuration);
-  twitterChart.tweetChart(b64Content, tweet, processWeeklyCases, lastTweetId);
+  twitterHelper.tweetChart(b64Content, tweet, processWeeklyCases, lastTweetId);
 }
 
 function processRollingSevenDayAverage(inReplyToId) {
@@ -314,7 +314,7 @@ function processRollingSevenDayAverage(inReplyToId) {
 
   let configuration = generateConfiguration(labels, firstDose, secondDose, singleDose, over16TotalFirstDoses, over16TotalSecondDoses, over16TotalSingleDoses, "Seven Day Average Vaccinations");
   let b64Content = chartHelper.writeChart('vaccinations/processRollingSevenDayAverage.png', configuration);
-  twitterChart.tweetChart(b64Content, tweet, processVaccinationsByDay, inReplyToId);
+  twitterHelper.tweetChart(b64Content, tweet, processVaccinationsByDay, inReplyToId);
 }
 
 function processWeeklyCases(inReplyToId) {
@@ -367,7 +367,7 @@ function processWeeklyCases(inReplyToId) {
     let configuration = generateConfiguration(labels, firstDose, secondDose, singleDose, over16TotalFirstDoses, over16TotalSecondDoses, over16TotalSingleDoses, "Weekly Vaccination Totals");
     over16TotalSingleDoses
     let b64Content = chartHelper.writeChart('vaccinations/weeklyTotals.png', configuration);
-    twitterChart.tweetChart(b64Content, tweet, function() { }, inReplyToId);        
+    twitterHelper.tweetChart(b64Content, tweet, function() { }, inReplyToId);        
 
   }
 }

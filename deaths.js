@@ -3,7 +3,7 @@ const moment = require('moment');
 const log4js = require("log4js");
 
 const chartHelper = require("./chartHelper");
-const twitterChart = require("./twitterChart");
+const twitterHelper = require("./twitterHelper");
 const constants = require("./constants");
 
 log4js.configure(constants.loggerConfiguration);
@@ -96,7 +96,7 @@ function processNewDeaths() {
 
   let configuration = generateConfiguration(labels, totalDeaths, dailyDeaths, "Daily Deaths");
   let b64Content = chartHelper.writeChart('deaths/daily.png', configuration);
-  twitterChart.tweetChart(b64Content, tweet, processWeeklyDeaths);
+  twitterHelper.tweetChart(b64Content, tweet, processWeeklyDeaths);
 }
 
 function processWeeklyDeaths(inReplyToId) {
@@ -169,7 +169,7 @@ function processWeeklyDeaths(inReplyToId) {
 
     let configuration = generateConfiguration(labels, totalDeaths, dailyDeaths, "Daily Deaths");
     let b64Content = chartHelper.writeChart('deaths/weeklyDeaths.png', configuration);
-    twitterChart.tweetChart(b64Content, tweet, function() {}, inReplyToId);
+    twitterHelper.tweetChart(b64Content, tweet, function() {}, inReplyToId);
   }
 }
 

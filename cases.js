@@ -3,7 +3,7 @@ const moment = require('moment');
 const log4js = require('log4js'); 
 
 const chartHelper = require("./chartHelper");
-const twitterChart = require("./twitterChart");
+const twitterHelper = require("./twitterHelper");
 const constants = require("./constants");
 
 log4js.configure(constants.loggerConfiguration);
@@ -137,7 +137,7 @@ function processNewCases() {
 
     let configuration = generateConfiguration(labels, totalCases, dailyCases, "Daily Cases");
     let b64Content = chartHelper.writeChart('cases/dailyCases.png', configuration);
-    twitterChart.tweetChart(b64Content, tweet, processRollingSevenDayAverage);
+    twitterHelper.tweetChart(b64Content, tweet, processRollingSevenDayAverage);
 }
 
 function processCasesByDay(inReplyToId) {
@@ -174,7 +174,7 @@ function processCasesByDay(inReplyToId) {
 
     let configuration = generateConfiguration(labels, totalCases, dailyCases, "Daily Cases By Day - " + days[day]);
     let b64Content = chartHelper.writeChart('cases/byDay.png', configuration);
-    twitterChart.tweetChart(b64Content, tweet, processWeeklyCases, inReplyToId);
+    twitterHelper.tweetChart(b64Content, tweet, processWeeklyCases, inReplyToId);
 }
 
 
@@ -221,7 +221,7 @@ function processRollingSevenDayAverage(inReplyToId) {
 
     let configuration = generateConfiguration(labels, totalCases, dailyCases, "Seven Day Average Cases");
     let b64Content = chartHelper.writeChart('cases/rollingSevenDayAverage.png', configuration);
-    twitterChart.tweetChart(b64Content, tweet, processCasesByDay, inReplyToId);
+    twitterHelper.tweetChart(b64Content, tweet, processCasesByDay, inReplyToId);
 }
 
 function processWeeklyCases(inReplyToId) {
@@ -292,7 +292,7 @@ function processWeeklyCases(inReplyToId) {
 
         let configuration = generateConfiguration(labels, totalCases, dailyCases, "Weekly cases");
         let b64Content = chartHelper.writeChart('cases/weeklyCases.png', configuration);
-        twitterChart.tweetChart(b64Content, tweet, function() { }, inReplyToId);        
+        twitterHelper.tweetChart(b64Content, tweet, function() { }, inReplyToId);        
     }
 }
 

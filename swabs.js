@@ -3,7 +3,7 @@ const moment = require('moment');
 const log4js = require("log4js");
 
 const chartHelper = require("./chartHelper");
-const twitterChart = require("./twitterChart");
+const twitterHelper = require("./twitterHelper");
 const constants = require("./constants");
 
 log4js.configure(constants.loggerConfiguration);
@@ -113,6 +113,15 @@ function processNewSwabs() {
   let dailyNegativeSwabs = Number(negativeSwabs.data[negativeSwabs.data.length - 1]);
   let dailyTotalSwabs = dailyPositiveSwabs + dailyNegativeSwabs;
   let dailyPercentagePositive = Number(percentagePositive.data[percentagePositive.data.length - 1]);
+  let daysWithLowerDailyPercentage = graphData.filter(item => item.percentagePositive < dailyPercentagePositive);
+  if (daysWithLowerDailyPercentage.length > 0) {
+    let lastDayLowerPercentage = daysWithLowerDailyPercentage[daysWithLowerDailyPercentage.length - 1];
+    logger.debug(`Found ${daysWithLowerDailyPercentage.length} days with lower seven data average`);
+    let dateDifference = moment(graphData[graphData.length - 1].date).diff(moment(lastDayLowerPercentage.date), 'days');
+    if (dateDifference > 21) {
+      logger.debug(`Lowest daily percentage since ${lastDayLowerPercentage.date}(${lastDayLowerPercentage.percentagePositive})`);
+    }
+  }
 
   let tweet = '🧪 Swabs: Daily results' +
               '\n' + moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM YYYY') +
@@ -125,7 +134,7 @@ function processNewSwabs() {
 
   let configuration = generateConfiguration(labels, percentagePositive, positiveSwabs, negativeSwabs, "Daily Swab Results");
   let b64Content = chartHelper.writeChart('swabs/dailySwabs.png', configuration, );
-  twitterChart.tweetChart(b64Content, tweet, processRollingSevenDayAverage);
+  twitterHelper.tweetChart(b64Content, tweet, processRollingSevenDayAverage);
 }
 
 function processSwabsByDay(lastTweetId) {
@@ -173,7 +182,7 @@ function processSwabsByDay(lastTweetId) {
 
   let configuration = generateConfiguration(labels, percentagePositive, positiveSwabs, negativeSwabs, "Swab Results By Day");
   let b64Content = chartHelper.writeChart('swabs/swabsByDay.png', configuration);
-  twitterChart.tweetChart(b64Content, tweet, processWeeklyTotals, lastTweetId);
+  twitterHelper.tweetChart(b64Content, tweet, processWeeklyTotals, lastTweetId);
 }
 
 function processRollingSevenDayAverage(inReplyToId) {
@@ -203,6 +212,15 @@ function processRollingSevenDayAverage(inReplyToId) {
   let dailyNegativeSwabs = Number(negativeSwabs.data[negativeSwabs.data.length - 1]);
   let dailyTotalSwabs = dailyPositiveSwabs + dailyNegativeSwabs;
   let dailyPercentagePositive = Number(percentagePositive.data[percentagePositive.data.length - 1]);
+  let daysWithLowerSevenDayAveragePercentage = graphData.filter(item => item.sevenDayAveragePercentagePositive < dailyPercentagePositive);
+  if (daysWithLowerSevenDayAveragePercentage.length > 0) {
+    let lastDayLowerPercentage = daysWithLowerSevenDayAveragePercentage[daysWithLowerSevenDayAveragePercentage.length - 1];
+    logger.debug(`Found ${daysWithLowerSevenDayAveragePercentage.length} days with lower seven data average`);
+    let dateDifference = moment(graphData[graphData.length - 1].date).diff(moment(lastDayLowerPercentage.date), 'days');
+    if (dateDifference > 21) {
+      logger.debug(`Lowest seven day average since ${lastDayLowerPercentage.date}(${lastDayLowerPercentage.sevenDayAveragePercentagePositive})`);
+    }
+  }
   let tweet = '🧪 Swabs: Seven day average' +
               '\n' + moment(graphData[graphData.length - 1].date).format('ddd, Do MMM') +
               '\nPositive tests: ' + dailyPositiveSwabs.toLocaleString('en') + '(' + dailyPercentagePositive + '%)' +
@@ -214,7 +232,7 @@ function processRollingSevenDayAverage(inReplyToId) {
 
   let configuration = generateConfiguration(labels, percentagePositive, positiveSwabs, negativeSwabs, "Seven Day Average Swab Results");
   let b64Content = chartHelper.writeChart('swabs/rollingSevenDayAverage.png', configuration);
-  twitterChart.tweetChart(b64Content, tweet, processSwabsByDay, inReplyToId);
+  twitterHelper.tweetChart(b64Content, tweet, processSwabsByDay, inReplyToId);
 }
 
 function processWeeklyTotals(inReplyToId) {
@@ -256,7 +274,7 @@ function processWeeklyTotals(inReplyToId) {
 
     let configuration = generateConfiguration(labels, percentagePositive, positiveSwabs, negativeSwabs, "Seven Day Average Swab Results");
     let b64Content = chartHelper.writeChart('swabs/weeklyTotals.png', configuration);
-    twitterChart.tweetChart(b64Content, tweet, function() {}, inReplyToId);
+    twitterHelper.tweetChart(b64Content, tweet, function() {}, inReplyToId);
   }  
 }
 /*
