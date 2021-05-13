@@ -181,7 +181,7 @@ function processSwabsByDay(lastTweetId) {
   }
   let tweet = '🧪 Swabs: By day' +
             '\n' + moment(graphData[graphData.length - 1].date).format('ddd, Do MMM') +
-            '\nPositive: ' + dailyPositiveSwabs.toLocaleString('en') + `(${dailyPercentagePositive}%})` +
+            '\nPositive: ' + dailyPositiveSwabs.toLocaleString('en') + `(${dailyPercentagePositive}%)` +
             '\nNegative: ' + dailyNegativeSwabs.toLocaleString('en') + `{${100 - dailyPercentagePositive}%)` +
             '\n' +
             '\n' + previousDay +
