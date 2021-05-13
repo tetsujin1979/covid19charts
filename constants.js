@@ -2,6 +2,7 @@ const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 
 
 const hashtag = '#COVID19Ireland';
 
+let records = '';
 const loggerConfiguration = {
     appenders: {
         console: {  type: 'stdout'  },
@@ -18,8 +19,24 @@ const loggerConfiguration = {
 const oneMonthAgo = new Date();
 oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
 
+const valueAndString = (value) => {
+    return {
+        value: value,
+        string: Number(value).toLocaleString('en')
+    }
+};
+
+const difference = (a, b) => {
+    return {
+        difference: ((a > b) ? '+' : '') + (a - b).toLocaleString('en'),
+        percentage: ((a > b) ? '+' : '') + (((a - b) * 100) / b).toFixed(2) + '%'
+    };
+};
+
 exports.days = days;
 exports.hashtag = hashtag;
 exports.loggerConfiguration = loggerConfiguration;
 exports.oneMonthAgo = oneMonthAgo;
-exports.debug = false;
+exports.valueAndString = valueAndString;
+exports.difference = difference;
+exports.debug = true;
