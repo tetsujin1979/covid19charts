@@ -39,4 +39,4 @@ exports.loggerConfiguration = loggerConfiguration;
 exports.oneMonthAgo = oneMonthAgo;
 exports.valueAndString = valueAndString;
 exports.difference = difference;
-exports.debug = true;
+exports.debug = false;
