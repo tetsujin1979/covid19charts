@@ -22,6 +22,12 @@ const graphData = new Array();
 const oneMonthAgo = constants.oneMonthAgo;
 
 let labels = "";
+let records = new Array();
+
+let dailyFirstDoseRecord = false;
+let dailySecondDoseRecord = false;
+let dailySingleDoseRecord = false;
+let dailyTotalDosesRecord = false;
 
 const firstDose = {
   label: "First Dose",
@@ -163,34 +169,62 @@ function processNewVaccinations() {
     over16TotalSecondDoses.data.push(value.totalSecondDose);
     over16TotalSingleDoses.data.push(value.totalSingleDose);
   });
-  let maxFirstDose = graphData.reduce(function(prev, current) { return (prev.firstDose > current.firstDose) ? prev : current  });
-  let maxSecondDose = graphData.reduce(function(prev, current) { return (prev.secondDose > current.secondDose) ? prev : current  });
-  let maxDailyTotalDose = graphData.reduce(function(prev, current) { return (prev.totalDailyDoses > current.totalDailyDoses) ? prev : current  });
-
-  let isRecordFirstDose = (maxFirstDose.date === graphData[graphData.length - 1].date);
-  let isRecordSecondDose = (maxSecondDose.date === graphData[graphData.length - 1].date);
-  let isRecordDailyTotalDoses = (maxDailyTotalDose.date === graphData[graphData.length - 1].date);
-
-  let dailyFirstDose = firstDose.data[firstDose.data.length - 1];
-  let dailySecondDose = secondDose.data[secondDose.data.length - 1];
-  let dailySingleDose = singleDose.data[singleDose.data.length - 1];
-
   let finalEntry = graphData[graphData.length - 1];
-  let totalFirstDose = finalEntry.totalFirstDose;
-  let totalSecondDose = finalEntry.totalSecondDose;
-  let totalSingleDose = finalEntry.totalSingleDose;
+  let dailyFirstDose = Number(firstDose.data[firstDose.data.length - 1]).toLocaleString('en');
+  let dailySecondDose = Number(secondDose.data[secondDose.data.length - 1]).toLocaleString('en');
+  let dailySingleDose = Number(singleDose.data[singleDose.data.length - 1]).toLocaleString('en');
+  let dailyTotalDoses = Number(finalEntry.totalDailyDoses).toLocaleString('en');
+
+  let orderedByFirstDose = graphData.slice().sort(function(a, b) { return (b.firstDose - a.firstDose); });
+  // No need to tweet a new day record (e.g. first dose on Monday) if today was a new daily high for first doses
+  if (orderedByFirstDose[0].firstDose === finalEntry.firstDose) {
+    dailyFirstDoseRecord = true;
+    let previousHighDate = moment(orderedByFirstDose[1].date).format('dddd, Do MMMM');
+    let previousHighFirstDoses = Number(orderedByFirstDose[1].firstDose).toLocaleString('en');
+    records.push(`🥇 Record First Dose - ${dailyFirstDose} - Previous high: ${previousHighDate}(${previousHighFirstDoses})`);
+  }
+
+  let orderedBySecondDose = graphData.slice().sort(function(a, b) { return (b.secondDose - a.secondDose); });
+  if (orderedBySecondDose[0].secondDose === finalEntry.secondDose) {
+    dailySecondDoseRecord = true;
+    let previousHighDate = moment(orderedBySecondDose[1].date).format('dddd, Do MMMM');
+    let previousHighSecondDoses = Number(orderedBySecondDose[1].secondDose).toLocaleString('en');
+    records.push(`🥇 Record Second Dose - ${dailySecondDose} - Previous high: ${previousHighDate}(${previousHighSecondDoses})`);
+  }
+
+  let orderedBySingleDose = graphData.slice().sort(function(a, b) { return (b.singleDose - a.singleDose); });
+  if (orderedBySingleDose[0].singleDose === finalEntry.singleDose) {
+    dailySingleDoseRecord = true;
+    let previousHighDate = moment(orderedBySingleDose[1].date).format('dddd, Do MMMM');
+    let previousHighSingleDoses = Number(orderedBySingleDose[1].singleDose).toLocaleString('en');
+    records.push(`🥇 Record Single Doses - ${dailySingleDose} - Previous high: ${previousHighDate}(${previousHighSingleDoses})`);
+  }
+
+  let orderedByTotalDose = graphData.slice().sort(function(a, b) { return (b.totalDailyDoses - a.totalDailyDoses); });
+  if (orderedByTotalDose[0].totalDailyDoses === finalEntry.totalDailyDoses) {
+    dailyTotalDosesRecord = true;
+    let previousHighDate = moment(orderedByTotalDose[1].date).format('dddd, Do MMMM');
+    let previousHighTotalDoses = Number(orderedByTotalDose[1].totalDailyDoses).toLocaleString('en');
+    records.push(`🥇 Record Total Doses - ${dailyTotalDoses} - Previous high: ${previousHighDate}(${previousHighTotalDoses})`);
+  }
+
+  let totalFirstDose = Number(finalEntry.totalFirstDose).toLocaleString('en');
+  let totalSecondDose = Number(finalEntry.totalSecondDose).toLocaleString('en');
+  let totalSingleDose = Number(finalEntry.totalSingleDose).toLocaleString('en');
   let totalDoses = totalFirstDose + totalSecondDose + totalSingleDose;
+  let totalVaccinated = Number(finalEntry.totalSecondDose + finalEntry.totalSingleDose).toLocaleString('en');
+  let totalVaccinatedPercentage = finalEntry.over16TotalSecondDoses + finalEntry.over16TotalSingleDoses
 
   let tweet = '💉 Vaccinations' +
               '\n' + moment(finalEntry.date).format('dddd, Do MMMM') + 
-              '\n1st dose: ' + Number(dailyFirstDose).toLocaleString('en') + (isRecordFirstDose ? newRecord : '') +
-              '\n2nd dose: ' + Number(dailySecondDose).toLocaleString('en') + (isRecordSecondDose ? newRecord : '') +
-              ((dailySingleDose > 0) ? '\nSingle dose: ' + Number(dailySingleDose).toLocaleString('en') : '') +
-              '\nTotal: ' + Number(finalEntry.totalDailyDoses).toLocaleString('en') + (isRecordDailyTotalDoses ? newRecord : '') +
+              `\n1st dose: ${dailyFirstDose}` +
+              `\n2nd dose: ${dailySecondDose}` +
+              `\nSingle dose: ${dailySingleDose}` +
+              `\nTotal: ${dailyTotalDoses}` +
               '\n' +
               '\nTotals' +
-              '\n1st dose: ' + Number(totalFirstDose).toLocaleString('en') + '(' + finalEntry.over16TotalFirstDoses + '% of 16+)' +
-              '\nVaccinated(2nd + single doses): ' + Number(totalSecondDose + totalSingleDose).toLocaleString('en') + '(' + Number(totalSecondDose).toLocaleString('en') + ' + ' + Number(totalSingleDose).toLocaleString('en') + ')(' + (finalEntry.over16TotalSecondDoses + finalEntry.over16TotalSingleDoses) + '% of 16+)' +
+              `\n1st dose: ${totalFirstDose}(${finalEntry.over16TotalFirstDoses}% of 16+)` +
+              `\nVaccinated(2nd + single doses): ${totalVaccinated}(${totalSecondDose} + ${totalSingleDose})(${totalVaccinatedPercentage})% of 16+)` +
               '\n' + hashtag +
               '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=vaccinations&dateSelection=lastTwoMonths&graphType=normal&displayType=graph&trendLine=false';
 
@@ -217,38 +251,70 @@ function processVaccinationsByDay(lastTweetId) {
     over16TotalSecondDoses.data.push(value.totalSecondDose);
     over16TotalSingleDoses.data.push(value.totalSingleDose);
   });
+  let finalEntry = graphData[graphData.length - 1];
   let previousDay = moment(graphData[graphData.length - 8].date).format('ddd, Do MMMM');
-  let dailyFirstDose = firstDose.data[firstDose.data.length - 1];
-  let dailySecondDose = secondDose.data[secondDose.data.length - 1];
-  let dailySingleDose = singleDose.data[singleDose.data.length - 1];
+  let dailyFirstDose = constants.valueAndString(firstDose.data[firstDose.data.length - 1]);
+  let dailySecondDose = constants.valueAndString(secondDose.data[secondDose.data.length - 1]);
+  let dailySingleDose = constants.valueAndString(singleDose.data[singleDose.data.length - 1]);
 
-  let previousFirstDose = firstDose.data[firstDose.data.length - 2];
-  let previousSecondDose = secondDose.data[secondDose.data.length - 2];
-  let previousSingleDose = singleDose.data[singleDose.data.length - 2];
+  let previousFirstDose = constants.valueAndString(firstDose.data[firstDose.data.length - 2]);
+  let previousSecondDose = constants.valueAndString(secondDose.data[secondDose.data.length - 2]);
+  let previousSingleDose = constants.valueAndString(singleDose.data[singleDose.data.length - 2]);
+  let previousTotalDailyDoses = constants.valueAndString(previousFirstDose.value + previousSecondDose.value + previousSingleDose.value);
 
-  let totalFirstDose = graphData[graphData.length - 1].totalFirstDose;
-  let totalSecondDose = graphData[graphData.length - 1].totalSecondDose;
-  let totalDailyDose = graphData[graphData.length - 1].totalDailyDose;
+  let totalFirstDose = constants.valueAndString(graphData[graphData.length - 1].totalFirstDose);
+  let totalSecondDose = constants.valueAndString(graphData[graphData.length - 1].totalSecondDose);
+  let totalDailyDoses = constants.valueAndString(graphData[graphData.length - 1].totalDailyDoses);
 
-  let firstDoseChange = dailyFirstDose - previousFirstDose;
-  let secondDoseChange = dailySecondDose - previousSecondDose;
-  let singleDoseChange = dailySingleDose - previousSingleDose;
-  let totalDosesChange = firstDoseChange + secondDoseChange + singleDoseChange;
+  let firstDoseChange = constants.difference(dailyFirstDose.value, previousFirstDose.value);
+  let secondDoseChange = constants.difference(dailySecondDose.value, previousSecondDose.value);
+  let singleDoseChange = constants.difference(dailySingleDose.value, previousSingleDose.value);
+  let totalDosesChange = constants.difference(totalDailyDoses.value, previousTotalDailyDoses.value);
+
+  let orderedByFirstDose = graphData.filter(item => item.date.getDay() == day)
+                                    .slice()
+                                    .sort(function(a, b) { return (b.firstDose - a.firstDose); });
+
+  if (!dailyFirstDoseRecord && orderedByFirstDose[0].firstDose === finalEntry.firstDose) {
+    let previousHighDate = moment(orderedByFirstDose[1].date).format('dddd, Do MMMM');
+    let previousHighFirstDoses = Number(orderedByFirstDose[1].firstDose).toLocaleString('en');
+    records.push(`🥇 Record First Doses adminstered on a ${days[day]}(${dailyFirstDose.string}) - Previous high: ${previousHighDate}(${previousHighFirstDoses})`);
+  }
+
+  let orderedBySecondDose = graphData.filter(item => item.date.getDay() == day)
+                                     .slice()
+                                     .sort(function(a, b) { return (b.secondDose - a.secondDose); });
+
+  if (!dailySecondDoseRecord && orderedBySecondDose[0].secondDose === finalEntry.secondDose) {
+    let previousHighDate = moment(orderedByFirstDose[1].date).format('dddd, Do MMMM');
+    let previousHighSecondDoses = Number(orderedBySecondDose[1].secondDose).toLocaleString('en');
+    records.push(`🥇 Record Second Doses adminstered on a ${days[day]}(${dailySecondDose.string}) - Previous high: ${previousHighDate}(${previousHighSecondDoses})`);
+  }
+
+  let orderedByTotalDose = graphData.filter(item => item.date.getDay() == day)
+                                    .slice()
+                                    .sort(function(a, b) { return (b.totalDailyDoses - a.totalDailyDoses); });
+
+  if (!dailyTotalDosesRecord && orderedByTotalDose[0].totalDailyDoses === finalEntry.totalDailyDoses) {
+    let previousHighDate = moment(orderedByTotalDose[1].date).format('dddd, Do MMMM');
+    let previousHighTotalDoses = Number(orderedByTotalDose[1].totalDailyDoses).toLocaleString('en');
+    records.push(`🥇 Record Total Doses adminstered on a ${days[day]}(${totalDailyDoses.string}) - Previous high: ${previousHighDate}(${previousHighTotalDoses})`);
+  }
 
   let tweet = '💉 Vaccinations: By day' +
               '\n' + moment(graphData[graphData.length - 1].date).format('ddd, Do MMMM') + 
-              '\n1st dose: ' + Number(dailyFirstDose).toLocaleString('en') + 
-              '\n2nd dose: ' + Number(dailySecondDose).toLocaleString('en') + 
-              ((dailySingleDose > 0) ? '\nSingle dose: ' + Number(dailySingleDose).toLocaleString('en') : '') +
-              '\nTotal: ' + Number(dailyFirstDose + dailySecondDose + (dailySingleDose == null ? 0 : dailySingleDose)).toLocaleString('en') + 
+              `\n1st dose: ${dailyFirstDose.string}` +
+              `\n2nd dose: ${dailySecondDose.string}` + 
+              `\nSingle dose: ${dailySingleDose.string}` +
+              `\nTotal: ${totalDailyDoses.string}` + 
               '\n' + 
               '\n' + previousDay +
               '\nDoses(Diff | % diff)' + 
-              '\n1st dose: ' + Number(previousFirstDose).toLocaleString('en') + '(' + (firstDoseChange > 0 ? '+' : '') + (firstDoseChange).toLocaleString('en') + ' | ' + ((firstDoseChange * 100) / previousFirstDose).toFixed(2) + '%)' +
-              '\n2nd dose: ' + Number(previousSecondDose).toLocaleString('en') + '(' + (secondDoseChange > 0 ? '+' : '') + (secondDoseChange).toLocaleString('en') + ' | ' + ((secondDoseChange * 100) / previousSecondDose).toFixed(2) + '%)' +
-              ((previousSingleDose > 0) ? '\nSingle dose: ' + Number(previousSingleDose).toLocaleString('en') + (singleDoseChange).toLocaleString('en') + ' | ' + ((singleDoseChange * 100) / previousSingleDose).toFixed(2) + '%)' : '') +
-              '\nTotal: ' + Number(previousFirstDose + previousSecondDose + (previousSingleDose == null ? 0 : previousSingleDose)).toLocaleString('en') + '(' + (totalDosesChange > 0 ? '+' : '') + (totalDosesChange).toLocaleString('en') + ' | ' + ((totalDosesChange * 100) / (previousFirstDose + previousSecondDose)).toFixed(2) + '%)' +
-              '\n' + hashtag +
+              `\n1st dose: ${previousFirstDose.string}(${firstDoseChange.difference} | ${firstDoseChange.percentage})` +
+              `\n2nd dose: ${previousSecondDose.string}(${secondDoseChange.difference} | ${secondDoseChange.percentage})` +
+              // ((previousSingleDose > 0) ? `\nSingle dose: ${previousSingleDose}(${singleDoseChange} | ${((singleDoseChange * 100) / previousSingleDose).toFixed(2)}%)` : '') +
+              `\nTotal: ${previousTotalDailyDoses.string}(${totalDosesChange.difference} | ${totalDosesChange.percentage})` +
+              `\n${hashtag}` +
               '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=vaccinations&dateSelection=lastTwoMonths&graphType=byWeekday&day=' + day + '&displayType=graph&trendLine=false';
 
   let configuration = generateConfiguration(labels, firstDose, secondDose, singleDose, over16TotalFirstDoses, over16TotalSecondDoses, over16TotalSingleDoses, "Vaccinations By Day - " + days[day]);
@@ -331,44 +397,49 @@ function processWeeklyCases(inReplyToId) {
       over16TotalSecondDoses.data.push(value.totalSecondDose);
       over16TotalSingleDoses.data.push(value.totalSingleDose);
     });
-    let weeklyFirstDose = firstDose.data[firstDose.data.length - 1];
-    let weeklySecondDose = secondDose.data[secondDose.data.length - 1];
-    let weeklySingleDose = singleDose.data[singleDose.data.length - 1];
-    let weeklyTotal = weeklyData[weeklyData.length - 1].weeklyTotalDoses;
+    let weeklyFirstDose = constants.valueAndString(firstDose.data[firstDose.data.length - 1]);
+    let weeklySecondDose = constants.valueAndString(secondDose.data[secondDose.data.length - 1]);
+    let weeklySingleDose = constants.valueAndString(singleDose.data[singleDose.data.length - 1]);
+    let weeklyTotal = constants.valueAndString(weeklyData[weeklyData.length - 1].weeklyTotalDoses);
 
-    let higherWeeklyTotal = weeklyData.reduce(function(prev, current) { return (prev.weeklyTotalDoses > current.weeklyTotalDoses) ? prev : current  });
-    let isRecordWeeklyTotal = higherWeeklyTotal.date === weeklyData[weeklyData.length - 1].date;
+    let orderedByTotalDoses = weeklyData.slice().filter(item => item.date.getDay() === 0).sort(function(a, b) { return (b.weeklyTotalDoses - a.weeklyTotalDoses);  });
+    if (orderedByTotalDoses[0].weeklyTotalDoses === weeklyTotal.value) {
+      let previousHighFirstDoses = Number(orderedByTotalDoses[1].weeklyTotalDoses).toLocaleString('en');
+      records.push(`🥇 Record Weekly Total Doses adminstered - ${weeklyTotal.string} - Previous high: ${moment(orderedByTotalDoses[1].date).format('dddd, Do MMMM')}(${previousHighFirstDoses})`);
+    }
 
-    let previousWeeksFirstDose = firstDose.data[firstDose.data.length - 2];
-    let previousWeeksSecondDose = secondDose.data[secondDose.data.length - 2];
-    let previousWeeksSingleDose = singleDose.data[singleDose.data.length - 2];
-    let previousWeeksTotal = weeklyData[weeklyData.length - 2].weeklyTotalDoses;
+    let previousWeeksFirstDose = constants.valueAndString(firstDose.data[firstDose.data.length - 2]);
+    let previousWeeksSecondDose = constants.valueAndString(secondDose.data[secondDose.data.length - 2]);
+    let previousWeeksSingleDose = constants.valueAndString(singleDose.data[singleDose.data.length - 2]);
+    let previousWeeksTotal = constants.valueAndString(weeklyData[weeklyData.length - 2].weeklyTotalDoses);
 
-    let firstDoseDifference = weeklyFirstDose - previousWeeksFirstDose;
-    let secondDoseDifference = weeklySecondDose - previousWeeksSecondDose;
-    let singleDoseDifference = weeklySingleDose - previousWeeksSingleDose;
-    let totalDifference = weeklyTotal - previousWeeksTotal;
+    let firstDoseDifference = constants.difference(weeklyFirstDose.value, previousWeeksFirstDose.value);
+    let secondDoseDifference = constants.difference(weeklySecondDose.value, previousWeeksSecondDose.value);
+    let singleDoseDifference = constants.difference(weeklySingleDose.value, previousWeeksSingleDose.value);
+    let totalDifference = constants.difference(weeklyTotal.value, previousWeeksTotal.value);
 
     let tweet = '💉 Vaccinations: Weekly totals' +
-              '\n' + moment(weeklyData[weeklyData.length - 1].date).format('dddd, Do MMMM') + 
-              '\n1st dose: ' + Number(weeklyFirstDose).toLocaleString('en') + 
-              '\n2nd dose: ' + Number(weeklySecondDose).toLocaleString('en') + 
-              (weeklySingleDose > 0 ? '\nSingle dose: ' + Number(weeklySingleDose).toLocaleString('en') : '') +
-              '\nTotal: ' + Number(weeklyTotal).toLocaleString('en') + (isRecordWeeklyTotal ? newRecord : '') +
+              `\n${moment(weeklyData[weeklyData.length - 1].date).format('dddd, Do MMMM')}` + 
+              `\n1st dose: ${weeklyFirstDose.string}` + 
+              `\n2nd dose: ${weeklySecondDose.string}` +
+              (weeklySingleDose.value > 0 ? `\nSingle dose: ${weeklySingleDose.string}` : '') +
+              `\nTotal: ${weeklyTotal.string}` +  
               '\n' +
-              '\n' + moment(weeklyData[weeklyData.length - 2].date).format('dddd, Do MMMM') + 
-              '\n1st dose: ' + Number(previousWeeksFirstDose).toLocaleString('en') + '(' + (firstDoseDifference > 0 ? '+' : '') + Number(firstDoseDifference).toLocaleString('en') + ')' +
-              '\n2nd dose: ' + Number(previousWeeksSecondDose).toLocaleString('en') + '(' + (secondDoseDifference > 0 ? '+' : '') + Number(secondDoseDifference).toLocaleString('en') + ')' +
-              (previousWeeksSingleDose > 0 ? 'Single dose: ' + Number(previousWeeksSingleDose).toLocaleString('en') + '(' + (singleDoseDifference > 0 ? '+' : '') + Number(singleDoseDifference).toLocaleString('en') + ')': '') +
-              '\nTotal: ' + Number(previousWeeksTotal).toLocaleString('en') + '(' + (totalDifference > 0 ? '+' : '') + Number(totalDifference).toLocaleString('en') + ')' + 
+              `\n${moment(weeklyData[weeklyData.length - 2].date).format('dddd, Do MMMM')}` + 
+              `\n1st dose: ${previousWeeksFirstDose.string}(${firstDoseDifference.difference} | ${firstDoseDifference.percentage})` +
+              `\n2nd dose: ${previousWeeksSecondDose.string}(${secondDoseDifference.difference} | ${secondDoseDifference.percentage})` +
+              // (previousWeeksSingleDose > 0 ? `Single dose: ${previousWeeksSingleDoseString}(` + (singleDoseDifference > 0 ? '+' : '') + Number(singleDoseDifference).toLocaleString('en') + ')': '') +
+              `\nTotal: ${previousWeeksTotal.string}(${totalDifference.difference} | ${totalDifference.percentage})` + 
               '\n' + hashtag +
               '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=vaccinations&dateSelection=lastTwoMonths&graphType=weeklyTotal&displayType=graph&trendLine=false';
 
     let configuration = generateConfiguration(labels, firstDose, secondDose, singleDose, over16TotalFirstDoses, over16TotalSecondDoses, over16TotalSingleDoses, "Weekly Vaccination Totals");
     over16TotalSingleDoses
     let b64Content = chartHelper.writeChart('vaccinations/weeklyTotals.png', configuration);
-    twitterHelper.tweetChart(b64Content, tweet, function() { }, inReplyToId);        
+    twitterHelper.tweetChart(b64Content, tweet, tweetRecords, inReplyToId);        
 
+  } else {
+    tweetRecords(inReplyToId);
   }
 }
 /*
@@ -515,4 +586,8 @@ function testUndefined(value) {
     retVal = 0;
   }
   return retVal;
+}
+
+function tweetRecords(inReplyToId) {
+  twitterHelper.tweetRecords(records, inReplyToId);
 }
