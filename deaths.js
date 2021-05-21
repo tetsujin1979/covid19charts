@@ -36,44 +36,38 @@ const totalDeaths = {
 const oneMonthAgo = constants.oneMonthAgo;
 
 logger.info('Processing daily deaths');
-fs.readFile('./covid19dashboard/data.json', 'utf8', (err, data) => {
-    if (err) {
-        logger.error(`Error reading file from disk: ${err}`);
-    } else {
-        // parse JSON string to JSON object
-        const covidData = JSON.parse(data);
-        let deaths = [];
-        let runningTotal = 0;
-        covidData.forEach(function(item, index) {
-          if (item.hasOwnProperty("dateString") && item.hasOwnProperty("deaths")) {
-            runningTotal += item.deaths;
-            let date = new Date(item.dateString);
-            let deathData = {
-              date: date,
-              deaths: item.deaths,
-              totalDeaths: runningTotal
-            }
-            if (index > 7) {
-              let today = covidData[index];
-              let yesterday = covidData[index - 1];
-              let twoDaysAgo = covidData[index - 2];
-              let threeDaysAgo = covidData[index - 3];
-              let fourDaysAgo = covidData[index - 4];
-              let fiveDaysAgo = covidData[index - 5];
-              let sixDayAgo = covidData[index - 6];
-              let weeklyDeaths = today.deaths + yesterday.deaths + twoDaysAgo.deaths + threeDaysAgo.deaths + fourDaysAgo.deaths + fiveDaysAgo.deaths + sixDayAgo.deaths;
-              deathData.sevenDayAverage = (weeklyDeaths / 7).toFixed(2);
-              if (date.getDay() === 0) {
-                deathData.weeklyDeaths = weeklyDeaths;
-              }
-            }
-            graphData.push(deathData);
-          }
-        });
-        header = '📅 ' + moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM YYYY');
-        processNewDeaths();
+function processData(covidData) {
+  let deaths = [];
+  let runningTotal = 0;
+  covidData.forEach(function(item, index) {
+    if (item.hasOwnProperty("dateString") && item.hasOwnProperty("deaths")) {
+      runningTotal += item.deaths;
+      let date = new Date(item.dateString);
+      let deathData = {
+        date: date,
+        deaths: item.deaths,
+        totalDeaths: runningTotal
+      }
+      if (index > 7) {
+        let today = covidData[index];
+        let yesterday = covidData[index - 1];
+        let twoDaysAgo = covidData[index - 2];
+        let threeDaysAgo = covidData[index - 3];
+        let fourDaysAgo = covidData[index - 4];
+        let fiveDaysAgo = covidData[index - 5];
+        let sixDayAgo = covidData[index - 6];
+        let weeklyDeaths = today.deaths + yesterday.deaths + twoDaysAgo.deaths + threeDaysAgo.deaths + fourDaysAgo.deaths + fiveDaysAgo.deaths + sixDayAgo.deaths;
+        deathData.sevenDayAverage = (weeklyDeaths / 7).toFixed(2);
+        if (date.getDay() === 0) {
+          deathData.weeklyDeaths = weeklyDeaths;
+        }
+      }
+      graphData.push(deathData);
     }
-});
+  });
+  header = '📅 ' + moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM YYYY');
+  processNewDeaths();
+}
 
 function processNewDeaths() {
   logger.info("Processing new deaths");
@@ -168,96 +162,10 @@ function processWeeklyDeaths(inReplyToId) {
                 '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=deaths&dateSelection=lastTwoMonths&graphType=normal&displayType=graph&trendLine=false';
 
     let configuration = generateConfiguration(labels, totalDeaths, dailyDeaths, "Daily Deaths");
-    let b64Content = chartHelper.writeChart('deaths/weeklyDeaths.png', configuration);
+    let b64Content = chartHelper.writeChart('/tmp/weeklyDeaths.png', configuration);
     twitterHelper.tweetChart(b64Content, tweet, function() {}, inReplyToId);
   }
 }
-
-/*
-function processDeathsByDay(inReplyToId)
-  let labels = new Array();
-  dailyDeaths.data = new Array();
-  totalDeaths.data = new Array();
-
-  let day = graphData[graphData.length - 1].date.getDay();
-  graphData.forEach(function(value, index) { 
-    if (value.date.getDay() == day) {
-      labels.push(value.date.toDateString());
-      dailyDeaths.data.push(value.deaths);
-      totalDeaths.data.push(value.totalDeaths);
-    }
-  });
-  newDeaths = dailyDeaths.data[dailyDeaths.data.length - 1];
-  previousDaysDeaths = dailyDeaths.data[dailyDeaths.data.length - 2];
-  change = newDeaths - previousDaysDeaths;
-  percentageChange = ((change * 100) / previousDaysDeaths).toFixed(2)
-  tweet = header +
-          '\n🦠 Daily deaths by day' + 
-          '\nToday\'s new deaths: ' + newDeaths + 
-          '\nLast ' + days[day] + '\'s deaths: ' + previousDaysDeaths + 
-          '\nChange: ' + change + 
-          '\nPercentage change: ' + percentageChange + '%' +
-          '\n' + hashtag + 
-          '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=deaths&dateSelection=lastTwoMonths&graphType=byWeekday&day=' + day + '&displayType=graph&trendLine=false';
-
-  console.log("Writing deaths by day");
-  writeChartToFile('deaths/byDay.png', labels, totalDeaths, dailyDeaths, tweet, processRollingSevenDayAverage, inReplyToId);
-  
-  thisObject.byDay = function(day) {
-    reset();
-    thisObject.graphData.forEach(function(value, index) { 
-      if (value.date.getDay() == day) {
-      }
-    });
-  };
-  
-  thisObject.dayAverage = function(increment, prefix) {
-    reset();
-    let initialTestsIndex = 0;
-    let todayDay = new Date().getDay();
-    for (let counter = 6; counter < 13; counter++) {
-      if (thisObject.graphData[counter].date.getDay() === todayDay) {
-        initialTestsIndex = counter;
-        break;
-      }
-    }
-    for (let counter = initialTestsIndex; counter < thisObject.graphData.length; counter += increment) {
-      let today = thisObject.graphData[counter];
-      let yesterday = thisObject.graphData[counter - 1];
-      let twoDaysAgo = thisObject.graphData[counter - 2];
-      let threeDaysAgo = thisObject.graphData[counter - 3];
-      let fourDaysAgo = thisObject.graphData[counter - 4];
-      let fiveDaysAgo = thisObject.graphData[counter - 5];
-      let sixDayAgo = thisObject.graphData[counter - 6];
-      let totalDeaths = today.deaths + yesterday.deaths + twoDaysAgo.deaths + threeDaysAgo.deaths + fourDaysAgo.deaths + fiveDaysAgo.deaths + sixDayAgo.deaths;
-      
-      thisObject.chartConfig.data.labels.push(prefix + today.date.toDateString());
-      thisObject.dailyDeaths.data.push((totalDeaths / 7).toFixed(2));
-      thisObject.totalDeaths.data.push(today.totalDeaths);
-    }
-  };
-
-  // thisObject.weeklyTotal = function() {
-  //   reset();
-  //   for (let counter = 6; counter < thisObject.graphData.length; counter++) {
-  //     let today = thisObject.graphData[counter];
-  //     if (today.date.getDay() === 6) {
-  //       let today = thisObject.graphData[counter];
-  //       let yesterday = thisObject.graphData[counter - 1];
-  //       let twoDaysAgo = thisObject.graphData[counter - 2];
-  //       let threeDaysAgo = thisObject.graphData[counter - 3];
-  //       let fourDaysAgo = thisObject.graphData[counter - 4];
-  //       let fiveDaysAgo = thisObject.graphData[counter - 5];
-  //       let sixDayAgo = thisObject.graphData[counter - 6];
-  //       let totalDeaths = today.deaths + yesterday.deaths + twoDaysAgo.deaths + threeDaysAgo.deaths + fourDaysAgo.deaths + fiveDaysAgo.deaths + sixDayAgo.deaths;
-
-  //       thisObject.chartConfig.data.labels.push('Week ending ' + today.date.toDateString());
-  //       thisObject.dailyDeaths.data.push(totalDeaths);
-  //       thisObject.totalDeaths.data.push(today.totalDeaths);
-  //     }
-  //   }
-  // };
-*/
 
 function generateConfiguration(labels, totalDeaths, dailyDeaths, title) {
   return {
@@ -301,3 +209,5 @@ function generateConfiguration(labels, totalDeaths, dailyDeaths, title) {
     }
   };
 }
+
+exports.processData = processData;
