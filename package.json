@@ -2,18 +2,24 @@
   "name": "covid19charts",
   "version": "1.0.0",
   "description": "A nodeJS application to post charts based on daily vaccinations, swabs, cases, and deaths to twitter ",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
+  "main": "handler.js",
   "author": "",
   "license": "MIT",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "bundle": "./node_modules/.bin/webpack"
+  },
   "dependencies": {
     "chart.js": "^2.9.4",
     "chartjs-node-canvas": "^3.1.0",
     "log4js": "^6.3.0",
     "moment": "^2.29.1",
+    "node-fetch": "^2.6.1",
     "twit": "^2.2.11"
+  },
+  "devDependencies": {
+    "webpack": "^5.37.1",
+    "webpack-cli": "^4.7.0",
+    "zip-webpack-plugin": "^4.0.1"
   }
 }
