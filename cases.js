@@ -320,8 +320,8 @@ function processWeeklyCases(inReplyToId) {
         let tweet = '🦠 Cases: Weekly total' +
                     '\nDate: Cases(Difference | % difference)' +
                     '\n' + moment(weeklyData[weeklyData.length - 1].date).format('dddd, Do MMMM') + ': ' + newCases.toLocaleString('en') + 
-                    ((lastWeekLessCases.dateDifference > 3) ? ` - ${lastWeekLessCases.dateDifference} weeks since a lower number of cases(${lastWeekLessCases.weeklyCases})` : '') +
-                    ((lastWeekMoreCases.dateDifference > 3) ? ` - ${lastWeekMoreCases.dateDifference} weeks since a higher number of cases(${lastWeekMoreCases.weeklyCases})` : '') +
+                    ((lastWeekLessCases.dateDifference > 3) ? `(${lastWeekLessCases.dateDifference} weeks since a lower number of cases - ${moment(lastWeekLessCases.date).format('dddd, Do MMMM')}: ${lastWeekMoreCases.weeklyCases.toLocaleString('en')})` : '') +
+                    ((lastWeekMoreCases.dateDifference > 3) ? `(${lastWeekMoreCases.dateDifference} weeks since a higher number of cases - ${moment(lastWeekMoreCases.date).format('dddd, Do MMMM')}: ${lastWeekMoreCases.weeklyCases.toLocaleString('en')})` : '') +
                     '\n' + moment(weeklyData[weeklyData.length - 2].date).format('dddd, Do MMMM') + ': ' + previousDaysCases.toLocaleString('en') + '(' + Number(previousDaysCasesChange) + ' | ' + previousDaysCasesPercentageChange + '%' + ')' +
                     '\n' + moment(weeklyData[weeklyData.length - 3].date).format('dddd, Do MMMM') + ': ' + previousWeeksCases.toLocaleString('en') + '(' + Number(previousWeeksCasesChange) + ' | ' + previousWeeksCasesPercentageChange + '%' + ')' +
                     '\n' +
