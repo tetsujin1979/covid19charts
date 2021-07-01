@@ -224,7 +224,7 @@ function processNewVaccinations() {
               '\n' +
               '\nTotals' +
               `\n1st dose: ${totalFirstDose}(${finalEntry.over16TotalFirstDoses}% of 16+)` +
-              `\nVaccinated(2nd + single doses): ${totalVaccinated}(${totalSecondDose} + ${totalSingleDose})(${totalVaccinatedPercentage})% of 16+)` +
+              `\nVaccinated(2nd + single doses): ${totalVaccinated}(${totalSecondDose} + ${totalSingleDose})(${totalVaccinatedPercentage}% of 16+)` +
               '\n' + hashtag +
               '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=vaccinations&dateSelection=lastTwoMonths&graphType=normal&displayType=graph&trendLine=false';
 
@@ -310,9 +310,9 @@ function processVaccinationsByDay(lastTweetId) {
               '\n' + 
               '\n' + previousDay +
               '\nDoses(Diff | % diff)' + 
-              `\n1st dose: ${previousFirstDose.string}(${firstDoseChange.difference} | ${firstDoseChange.percentage})` +
-              `\n2nd dose: ${previousSecondDose.string}(${secondDoseChange.difference} | ${secondDoseChange.percentage})` +
-              // ((previousSingleDose > 0) ? `\nSingle dose: ${previousSingleDose}(${singleDoseChange} | ${((singleDoseChange * 100) / previousSingleDose).toFixed(2)}%)` : '') +
+              `\n1st: ${previousFirstDose.string}(${firstDoseChange.difference} | ${firstDoseChange.percentage})` +
+              `\n2nd: ${previousSecondDose.string}(${secondDoseChange.difference} | ${secondDoseChange.percentage})` +
+              ((previousSingleDose > 0) ? `\nSingle: ${previousSingleDose}(${singleDoseChange} | ${((singleDoseChange * 100) / previousSingleDose).toFixed(2)}%)` : '') +
               `\nTotal: ${previousTotalDailyDoses.string}(${totalDosesChange.difference} | ${totalDosesChange.percentage})` +
               `\n${hashtag}` +
               '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=vaccinations&dateSelection=lastTwoMonths&graphType=byWeekday&day=' + day + '&displayType=graph&trendLine=false';
