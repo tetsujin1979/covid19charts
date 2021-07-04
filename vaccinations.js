@@ -213,7 +213,7 @@ function processNewVaccinations() {
   let totalSingleDose = Number(finalEntry.totalSingleDose).toLocaleString('en');
   let totalDoses = totalFirstDose + totalSecondDose + totalSingleDose;
   let totalVaccinated = Number(finalEntry.totalSecondDose + finalEntry.totalSingleDose).toLocaleString('en');
-  let totalVaccinatedPercentage = finalEntry.over16TotalSecondDoses + finalEntry.over16TotalSingleDoses
+  let totalVaccinatedPercentage = (finalEntry.over16TotalSecondDoses + finalEntry.over16TotalSingleDoses).toFixed(2);
 
   let tweet = '💉 Vaccinations' +
               '\n' + moment(finalEntry.date).format('dddd, Do MMMM') + 
