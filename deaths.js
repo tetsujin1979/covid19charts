@@ -296,4 +296,4 @@ function generateConfiguration(labels, totalDeaths, dailyDeaths, title) {
   };
 }
 
-module.processData = processData;
+exports.processData = processData;

@@ -603,4 +603,4 @@ function tweetRecords(inReplyToId) {
   twitterHelper.tweetRecords(records, inReplyToId);
 }
 
-module.processData = processData;
+exports.processData = processData;

@@ -420,4 +420,4 @@ function generateConfiguration(labels, totalCases, dailyCases, title) {
     };
 }
 
-module.processData = processData;
+exports.processData = processData;

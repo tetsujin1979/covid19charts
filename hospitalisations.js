@@ -245,4 +245,4 @@ function generateConfiguration(labels, dailyHospitalisations, dailyICU, title) {
   };
 }
 
-module.processData = processData;
+exports.processData = processData;
