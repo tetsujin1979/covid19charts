@@ -35,44 +35,39 @@ const graphData = new Array();
 
 const oneMonthAgo = constants.oneMonthAgo;
 
-logger.info('Processing daily cases');
-fs.readFile('./covid19dashboard/data.json', 'utf8', (err, data) => {
-    if (err) {
-        logger.error(`Error reading file from disk: ${err}`);
-    } else {
-        covidData = JSON.parse(data);
-        let cases = [];
-        let totalCases = 0;
-        covidData.forEach(function(item, index) {
-            if (item.hasOwnProperty("dateString") && item.hasOwnProperty("cases")) {
-                totalCases += item.cases;
-                let date = new Date(item.dateString);
-                let caseData = {
-                  date: date,
-                  cases: item.cases,
-                  totalCases: totalCases
-                };
-                if (index > 7) {
-                    let today = covidData[index];
-                    let yesterday = covidData[index - 1];
-                    let twoDaysAgo = covidData[index - 2];
-                    let threeDaysAgo = covidData[index - 3];
-                    let fourDaysAgo = covidData[index - 4];
-                    let fiveDaysAgo = covidData[index - 5];
-                    let sixDayAgo = covidData[index - 6];
-                    let weeklyCases = today.cases + yesterday.cases + twoDaysAgo.cases + threeDaysAgo.cases + fourDaysAgo.cases + fiveDaysAgo.cases + sixDayAgo.cases;
-                    caseData.sevenDayAverage = (weeklyCases / 7).toFixed(2);
-                    if (date.getDay() === 0) {
-                        caseData.weeklyCases = weeklyCases;
-                    }
+function processData(covidData) {
+    logger.info('Processing cases');
+    let cases = [];
+    let totalCases = 0;
+    covidData.forEach(function(item, index) {
+        if (item.hasOwnProperty("dateString") && item.hasOwnProperty("cases")) {
+            totalCases += item.cases;
+            let date = new Date(item.dateString);
+            let caseData = {
+              date: date,
+              cases: item.cases,
+              totalCases: totalCases
+            };
+            if (index > 7) {
+                let today = covidData[index];
+                let yesterday = covidData[index - 1];
+                let twoDaysAgo = covidData[index - 2];
+                let threeDaysAgo = covidData[index - 3];
+                let fourDaysAgo = covidData[index - 4];
+                let fiveDaysAgo = covidData[index - 5];
+                let sixDayAgo = covidData[index - 6];
+                let weeklyCases = today.cases + yesterday.cases + twoDaysAgo.cases + threeDaysAgo.cases + fourDaysAgo.cases + fiveDaysAgo.cases + sixDayAgo.cases;
+                caseData.sevenDayAverage = (weeklyCases / 7).toFixed(2);
+                if (date.getDay() === 0) {
+                    caseData.weeklyCases = weeklyCases;
                 }
-                graphData.push(caseData);
             }
-        });
-        header = '📅 ' + moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM YYYY');
-        processNewCases();
-    }
-});
+            graphData.push(caseData);
+        }
+    });
+    header = '📅 ' + moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM YYYY');
+    processNewCases();
+}
 
 function processNewCases() {
     logger.info("Processing new cases");
@@ -424,3 +419,5 @@ function generateConfiguration(labels, totalCases, dailyCases, title) {
         }
     };
 }
+
+module.processData = processData;

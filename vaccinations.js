@@ -86,75 +86,68 @@ const over16TotalSingleDoses = {
   type: "line"
 };
 
-logger.info('Processing vaccinations');
-fs.readFile('./covid19dashboard/data.json', 'utf8', (err, data) => {
-  if (err) {
-      logger.error(`Error reading file from disk: ${err}`);
-  } else {
-    const covidData = JSON.parse(data);
-    logger.debug(`Processing ${covidData.length} items`);
-    let vaccinations = [];
-    let totalFirstDose = null;
-    let totalSecondDose = null;
-    let totalSingleDose = null;
-    covidData.forEach(function(item, index) {
-      if (item.hasOwnProperty("dateString") && item.hasOwnProperty("firstDose")) {
-        let date = new Date(item.dateString);
-        totalFirstDose = (totalFirstDose == null) ? item.firstDose : (totalFirstDose + item.firstDose);
-        let over16FirstDosePercent = Number(((totalFirstDose * 100) / over16).toFixed(2));
-        let over16SecondDosePercent = null;
-        let over16SingleDosePercent = null;
-        if (item.hasOwnProperty("secondDose")) {
-          totalSecondDose =  (totalSecondDose == null) ? item.secondDose : (totalSecondDose + item.secondDose);
-          over16SecondDosePercent = Number(((totalSecondDose * 100) / over16).toFixed(2));
-        }
-        if (item.hasOwnProperty("singleDose")) {
-          totalSingleDose = (totalSingleDose == null) ? item.singleDose : (totalSingleDose + item.singleDose);
-          over16SingleDosePercent = Number(((totalSingleDose * 100) / over16).toFixed(2));
-        }
-        let vaccinatedData = {
-          date: date,
-          firstDose: item.firstDose,
-          secondDose: (item.hasOwnProperty("secondDose") ? item.secondDose : 0),
-          singleDose: (item.hasOwnProperty("singleDose") ? item.singleDose : 0),
-          totalDailyDoses: (item.firstDose + (item.hasOwnProperty("secondDose") ? item.secondDose : 0) + (item.hasOwnProperty("singleDose") ? item.singleDose : 0)),
-          totalFirstDose: totalFirstDose,
-          totalSecondDose: totalSecondDose,
-          totalSingleDose: totalSingleDose,
-          over16TotalFirstDoses: over16FirstDosePercent,
-          over16TotalSecondDoses: over16SecondDosePercent,
-          over16TotalSingleDoses: over16SingleDosePercent
-        };
-        if (index > 7) {
-          let today = covidData[index];
-          let yesterday = covidData[index - 1];
-          let twoDaysAgo = covidData[index - 2];
-          let threeDaysAgo = covidData[index - 3];
-          let fourDaysAgo = covidData[index - 4];
-          let fiveDaysAgo = covidData[index - 5];
-          let sixDayAgo = covidData[index - 6];
-          let sevenDayTotalFirstDoses = today.firstDose + yesterday.firstDose + twoDaysAgo.firstDose + threeDaysAgo.firstDose + fourDaysAgo.firstDose + fiveDaysAgo.firstDose + sixDayAgo.firstDose;
-          let sevenDayTotalSecondDoses = today.secondDose + yesterday.secondDose + twoDaysAgo.secondDose + threeDaysAgo.secondDose + fourDaysAgo.secondDose + fiveDaysAgo.secondDose + sixDayAgo.secondDose;
-          let sevenDayTotalSingleDoses = testUndefined(today.singleDose) + testUndefined(yesterday.singleDose) + testUndefined(twoDaysAgo.singleDose) + testUndefined(threeDaysAgo.singleDose) + testUndefined(fourDaysAgo.singleDose) + testUndefined(fiveDaysAgo.singleDose) + testUndefined(sixDayAgo.singleDose);
-          vaccinatedData.sevenDayAverageFirstDose = (sevenDayTotalFirstDoses / 7).toFixed(2);
-          vaccinatedData.sevenDayAverageSecondDose = (sevenDayTotalSecondDoses / 7).toFixed(2);
-          vaccinatedData.sevenDayAverageSingleDose = (sevenDayTotalSingleDoses / 7).toFixed(2);
-          if (date.getDay() === 0) {
-            vaccinatedData.weeklyFirstDoses = sevenDayTotalFirstDoses;
-            vaccinatedData.weeklySecondDoses = sevenDayTotalSecondDoses;
-            vaccinatedData.weeklySingleDoses = sevenDayTotalSingleDoses;
-            vaccinatedData.weeklyTotalDoses = sevenDayTotalFirstDoses + sevenDayTotalSecondDoses + sevenDayTotalSingleDoses;
-          }
-
-        }
-        graphData.push(vaccinatedData);
+function processData(covidData) {
+  logger.info('Processing vaccinations');
+  let vaccinations = [];
+  let totalFirstDose = null;
+  let totalSecondDose = null;
+  let totalSingleDose = null;
+  covidData.forEach(function(item, index) {
+    if (item.hasOwnProperty("dateString") && item.hasOwnProperty("firstDose")) {
+      let date = new Date(item.dateString);
+      totalFirstDose = (totalFirstDose == null) ? item.firstDose : (totalFirstDose + item.firstDose);
+      let over16FirstDosePercent = Number(((totalFirstDose * 100) / over16).toFixed(2));
+      let over16SecondDosePercent = null;
+      let over16SingleDosePercent = null;
+      if (item.hasOwnProperty("secondDose")) {
+        totalSecondDose =  (totalSecondDose == null) ? item.secondDose : (totalSecondDose + item.secondDose);
+        over16SecondDosePercent = Number(((totalSecondDose * 100) / over16).toFixed(2));
       }
-    });
-    header = '📅 ' + moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM YYYY');
-    processNewVaccinations();
-  }
-});
+      if (item.hasOwnProperty("singleDose")) {
+        totalSingleDose = (totalSingleDose == null) ? item.singleDose : (totalSingleDose + item.singleDose);
+        over16SingleDosePercent = Number(((totalSingleDose * 100) / over16).toFixed(2));
+      }
+      let vaccinatedData = {
+        date: date,
+        firstDose: item.firstDose,
+        secondDose: (item.hasOwnProperty("secondDose") ? item.secondDose : 0),
+        singleDose: (item.hasOwnProperty("singleDose") ? item.singleDose : 0),
+        totalDailyDoses: (item.firstDose + (item.hasOwnProperty("secondDose") ? item.secondDose : 0) + (item.hasOwnProperty("singleDose") ? item.singleDose : 0)),
+        totalFirstDose: totalFirstDose,
+        totalSecondDose: totalSecondDose,
+        totalSingleDose: totalSingleDose,
+        over16TotalFirstDoses: over16FirstDosePercent,
+        over16TotalSecondDoses: over16SecondDosePercent,
+        over16TotalSingleDoses: over16SingleDosePercent
+      };
+      if (index > 7) {
+        let today = covidData[index];
+        let yesterday = covidData[index - 1];
+        let twoDaysAgo = covidData[index - 2];
+        let threeDaysAgo = covidData[index - 3];
+        let fourDaysAgo = covidData[index - 4];
+        let fiveDaysAgo = covidData[index - 5];
+        let sixDayAgo = covidData[index - 6];
+        let sevenDayTotalFirstDoses = today.firstDose + yesterday.firstDose + twoDaysAgo.firstDose + threeDaysAgo.firstDose + fourDaysAgo.firstDose + fiveDaysAgo.firstDose + sixDayAgo.firstDose;
+        let sevenDayTotalSecondDoses = today.secondDose + yesterday.secondDose + twoDaysAgo.secondDose + threeDaysAgo.secondDose + fourDaysAgo.secondDose + fiveDaysAgo.secondDose + sixDayAgo.secondDose;
+        let sevenDayTotalSingleDoses = testUndefined(today.singleDose) + testUndefined(yesterday.singleDose) + testUndefined(twoDaysAgo.singleDose) + testUndefined(threeDaysAgo.singleDose) + testUndefined(fourDaysAgo.singleDose) + testUndefined(fiveDaysAgo.singleDose) + testUndefined(sixDayAgo.singleDose);
+        vaccinatedData.sevenDayAverageFirstDose = (sevenDayTotalFirstDoses / 7).toFixed(2);
+        vaccinatedData.sevenDayAverageSecondDose = (sevenDayTotalSecondDoses / 7).toFixed(2);
+        vaccinatedData.sevenDayAverageSingleDose = (sevenDayTotalSingleDoses / 7).toFixed(2);
+        if (date.getDay() === 0) {
+          vaccinatedData.weeklyFirstDoses = sevenDayTotalFirstDoses;
+          vaccinatedData.weeklySecondDoses = sevenDayTotalSecondDoses;
+          vaccinatedData.weeklySingleDoses = sevenDayTotalSingleDoses;
+          vaccinatedData.weeklyTotalDoses = sevenDayTotalFirstDoses + sevenDayTotalSecondDoses + sevenDayTotalSingleDoses;
+        }
 
+      }
+      graphData.push(vaccinatedData);
+    }
+  });
+  header = '📅 ' + moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM YYYY');
+  processNewVaccinations();
+}
 
 function processNewVaccinations() {
   logger.info('Processing daily vaccinations');
@@ -609,3 +602,5 @@ function testUndefined(value) {
 function tweetRecords(inReplyToId) {
   twitterHelper.tweetRecords(records, inReplyToId);
 }
+
+module.processData = processData;

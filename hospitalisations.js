@@ -34,42 +34,36 @@ const dailyICU = {
 
 const oneMonthAgo = constants.oneMonthAgo;
 
-logger.info('Processing daily hospitalisations');
-fs.readFile('./covid19dashboard/data.json', 'utf8', (err, data) => {
-    if (err) {
-        logger.error(`Error reading file from disk: ${err}`);
-    } else {
-        // parse JSON string to JSON object
-        const covidData = JSON.parse(data);
-        covidData.forEach(function(item, index) {
-          if (item.hasOwnProperty("dateString") && item.hasOwnProperty("hospitalisations") && item.hasOwnProperty("icu")) {
-            let date = new Date(item.dateString);
-            let hospitalisationData = {
-              date: date,
-              hospitalisations: item.hospitalisations,
-              icu: item.icu
-            }
-            if (index > 7) {
-              let today = covidData[index];
-              let yesterday = covidData[index - 1];
-              let twoDaysAgo = covidData[index - 2];
-              let threeDaysAgo = covidData[index - 3];
-              let fourDaysAgo = covidData[index - 4];
-              let fiveDaysAgo = covidData[index - 5];
-              let sixDayAgo = covidData[index - 6];
-              let weeklyHospitalisations = today.hospitalisations + yesterday.hospitalisations + twoDaysAgo.hospitalisations + threeDaysAgo.hospitalisations + fourDaysAgo.hospitalisations + fiveDaysAgo.hospitalisations + sixDayAgo.hospitalisations;
-              let weeklyICU = today.icu + yesterday.icu + twoDaysAgo.icu + threeDaysAgo.icu + fourDaysAgo.icu + fiveDaysAgo.icu + sixDayAgo.icu;
-              hospitalisationData.sevenDayAverageHospitalisations = (weeklyHospitalisations / 7).toFixed(2);
-              hospitalisationData.sevenDayAverageICU = (weeklyICU / 7).toFixed(2);
-            }
-            graphData.push(hospitalisationData);
-          }
-        });
-
-        header = '📅 ' + moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM YYYY');
-        processDailyHospitalisationData();
+function processData(covidData) {
+  logger.info('Processing daily hospitalisations');
+  covidData.forEach(function(item, index) {
+    if (item.hasOwnProperty("dateString") && item.hasOwnProperty("hospitalisations") && item.hasOwnProperty("icu")) {
+      let date = new Date(item.dateString);
+      let hospitalisationData = {
+        date: date,
+        hospitalisations: item.hospitalisations,
+        icu: item.icu
+      }
+      if (index > 7) {
+        let today = covidData[index];
+        let yesterday = covidData[index - 1];
+        let twoDaysAgo = covidData[index - 2];
+        let threeDaysAgo = covidData[index - 3];
+        let fourDaysAgo = covidData[index - 4];
+        let fiveDaysAgo = covidData[index - 5];
+        let sixDayAgo = covidData[index - 6];
+        let weeklyHospitalisations = today.hospitalisations + yesterday.hospitalisations + twoDaysAgo.hospitalisations + threeDaysAgo.hospitalisations + fourDaysAgo.hospitalisations + fiveDaysAgo.hospitalisations + sixDayAgo.hospitalisations;
+        let weeklyICU = today.icu + yesterday.icu + twoDaysAgo.icu + threeDaysAgo.icu + fourDaysAgo.icu + fiveDaysAgo.icu + sixDayAgo.icu;
+        hospitalisationData.sevenDayAverageHospitalisations = (weeklyHospitalisations / 7).toFixed(2);
+        hospitalisationData.sevenDayAverageICU = (weeklyICU / 7).toFixed(2);
+      }
+      graphData.push(hospitalisationData);
     }
-});
+  });
+
+  header = '📅 ' + moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM YYYY');
+  processDailyHospitalisationData();
+}
 
 function processDailyHospitalisationData() {
   logger.info("Processing daily hospitalisation data");
@@ -250,3 +244,5 @@ function generateConfiguration(labels, dailyHospitalisations, dailyICU, title) {
     }
   };
 }
+
+module.processData = processData;

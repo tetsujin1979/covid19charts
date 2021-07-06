@@ -35,45 +35,39 @@ const totalDeaths = {
 
 const oneMonthAgo = constants.oneMonthAgo;
 
-logger.info('Processing daily deaths');
-fs.readFile('./covid19dashboard/data.json', 'utf8', (err, data) => {
-    if (err) {
-        logger.error(`Error reading file from disk: ${err}`);
-    } else {
-        // parse JSON string to JSON object
-        const covidData = JSON.parse(data);
-        let deaths = [];
-        let runningTotal = 0;
-        covidData.forEach(function(item, index) {
-          if (item.hasOwnProperty("dateString") && item.hasOwnProperty("deaths")) {
-            runningTotal += item.deaths;
-            let date = new Date(item.dateString);
-            let deathData = {
-              date: date,
-              deaths: item.deaths,
-              totalDeaths: runningTotal
-            }
-            if (index > 7) {
-              let today = covidData[index];
-              let yesterday = covidData[index - 1];
-              let twoDaysAgo = covidData[index - 2];
-              let threeDaysAgo = covidData[index - 3];
-              let fourDaysAgo = covidData[index - 4];
-              let fiveDaysAgo = covidData[index - 5];
-              let sixDayAgo = covidData[index - 6];
-              let weeklyDeaths = today.deaths + yesterday.deaths + twoDaysAgo.deaths + threeDaysAgo.deaths + fourDaysAgo.deaths + fiveDaysAgo.deaths + sixDayAgo.deaths;
-              deathData.sevenDayAverage = (weeklyDeaths / 7).toFixed(2);
-              if (date.getDay() === 0) {
-                deathData.weeklyDeaths = weeklyDeaths;
-              }
-            }
-            graphData.push(deathData);
-          }
-        });
-        header = '📅 ' + moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM YYYY');
-        processNewDeaths();
+function processData(covidData) {
+  logger.info('Processing deaths');
+  let deaths = [];
+  let runningTotal = 0;
+  covidData.forEach(function(item, index) {
+    if (item.hasOwnProperty("dateString") && item.hasOwnProperty("deaths")) {
+      runningTotal += item.deaths;
+      let date = new Date(item.dateString);
+      let deathData = {
+        date: date,
+        deaths: item.deaths,
+        totalDeaths: runningTotal
+      }
+      if (index > 7) {
+        let today = covidData[index];
+        let yesterday = covidData[index - 1];
+        let twoDaysAgo = covidData[index - 2];
+        let threeDaysAgo = covidData[index - 3];
+        let fourDaysAgo = covidData[index - 4];
+        let fiveDaysAgo = covidData[index - 5];
+        let sixDayAgo = covidData[index - 6];
+        let weeklyDeaths = today.deaths + yesterday.deaths + twoDaysAgo.deaths + threeDaysAgo.deaths + fourDaysAgo.deaths + fiveDaysAgo.deaths + sixDayAgo.deaths;
+        deathData.sevenDayAverage = (weeklyDeaths / 7).toFixed(2);
+        if (date.getDay() === 0) {
+          deathData.weeklyDeaths = weeklyDeaths;
+        }
+      }
+      graphData.push(deathData);
     }
-});
+  });
+  header = '📅 ' + moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM YYYY');
+  processNewDeaths();
+}
 
 function processNewDeaths() {
   logger.info("Processing new deaths");
@@ -301,3 +295,5 @@ function generateConfiguration(labels, totalDeaths, dailyDeaths, title) {
     }
   };
 }
+
+module.processData = processData;
