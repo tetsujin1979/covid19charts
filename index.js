@@ -1,12 +1,14 @@
 'use strict';
 const fs = require('fs');
-const log4js = require("log4js");
+const log4js = require('log4js');
 
 const deaths = require('./deaths');
 const cases = require('./cases');
 const swabs = require('./swabs');
 const vaccinations = require('./vaccinations');
 const hospitalisations = require('./hospitalisations');
+
+const constants = require("./constants");
 
 log4js.configure(constants.loggerConfiguration);
 const logger = log4js.getLogger('index');
@@ -27,7 +29,7 @@ if (process.argv.length == 3) {
 	  	} else {
 	    	const covidData = JSON.parse(data);
 	    	logger.debug(`Processing ${covidData.length} items`);
-	    	metrics[argv[2]].processData(covidData);
+	    	metrics[process.argv[2]].processData(covidData);
 		};
 	});
 

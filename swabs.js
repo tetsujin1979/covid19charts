@@ -434,3 +434,5 @@ function generateConfiguration(labels, percentagePositive, positiveSwabs, negati
       }
     };
 }
+
+exports.processData = processData;
