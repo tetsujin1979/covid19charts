@@ -16,7 +16,7 @@ const logger = log4js.getLogger('vaccinations');
 const hashtag = constants.hashtag;
 
 const population = 4977400;
-const over16 = 3909626;
+const over16 = 3749001;
 
 const graphData = new Array();
 const oneMonthAgo = constants.oneMonthAgo;
@@ -401,6 +401,24 @@ function processWeeklyCases(inReplyToId) {
     let weeklySecondDose = constants.valueAndString(secondDose.data[secondDose.data.length - 1]);
     let weeklySingleDose = constants.valueAndString(singleDose.data[singleDose.data.length - 1]);
     let weeklyTotal = constants.valueAndString(weeklyData[weeklyData.length - 1].weeklyTotalDoses);
+
+    let orderedByFirstDoses = weeklyData.slice().filter(item => item.date.getDay() === 0).sort(function(a, b) { return (b.weeklyFirstDoses - a.weeklyFirstDoses);  });
+    if (orderedByFirstDoses[0].weeklyFirstDoses === weeklyFirstDose.value) {
+      let previousHighFirstDoses = Number(orderedByFirstDoses[1].weeklyTotalDoses).toLocaleString('en');
+      records.push(`🥇 Record Weekly First Doses adminstered - ${weeklyFirstDose.string} - Previous high: ${moment(orderedByFirstDoses[1].date).format('dddd, Do MMMM')}(${previousHighFirstDoses})`);
+    }
+
+    let orderedBySecondDoses = weeklyData.slice().filter(item => item.date.getDay() === 0).sort(function(a, b) { return (b.weeklySecondDoses - a.weeklySecondDoses);  });
+    if (orderedBySecondDoses[0].weeklySecondDoses === weeklySecondDose.value) {
+      let previousHighSecondDoses = Number(orderedBySecondDoses[1].weeklySecondDoses).toLocaleString('en');
+      records.push(`🥇 Record Weekly Second Doses adminstered - ${weeklySecondDose.string} - Previous high: ${moment(orderedBySecondDoses[1].date).format('dddd, Do MMMM')}(${previousHighSecondDoses})`);
+    }
+
+    let orderedBySingleDoses = weeklyData.slice().filter(item => item.date.getDay() === 0).sort(function(a, b) { return (b.weeklySingleDoses - a.weeklySingleDoses);  });
+    if (orderedBySingleDoses[0].weeklySecondDoses === weeklySingleDose.value) {
+      let previousHighSingleDoses = Number(orderedBySingleDoses[1].weeklySingleDoses).toLocaleString('en');
+      records.push(`🥇 Record Weekly Single Doses adminstered - ${weeklySingleDose.string} - Previous high: ${moment(orderedBySingleDoses[1].date).format('dddd, Do MMMM')}(${previousHighSingleDoses})`);
+    }
 
     let orderedByTotalDoses = weeklyData.slice().filter(item => item.date.getDay() === 0).sort(function(a, b) { return (b.weeklyTotalDoses - a.weeklyTotalDoses);  });
     if (orderedByTotalDoses[0].weeklyTotalDoses === weeklyTotal.value) {
