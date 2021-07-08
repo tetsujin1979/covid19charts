@@ -124,11 +124,11 @@ function processDailyHospitalisationData() {
   }
   if (moreHospitalisations.length > 0) {
       // The last entry in the array, i.e. the last date with more cases than today
-      let lastDayMoreHospitalisations = moreHospitalisations[moreHospitalisations.length - 1];
+      let lastDayHigherHospitalisations = moreHospitalisations[moreHospitalisations.length - 1];
       // The number of days since the above
-      lastDayMoreHospitalisations.date = lastDayMoreHospitalisations.date;
-      lastDayMoreHospitalisations.hospitalisations = lastDayMoreHospitalisations.hospitalisations;
-      lastDayMoreHospitalisations.dateDifference = moment(graphData[graphData.length - 1].date).diff(moment(lastDayMoreHospitalisations.date), 'days');
+      lastDayMoreHospitalisations.date = lastDayHigherHospitalisations.date;
+      lastDayMoreHospitalisations.hospitalisations = lastDayHigherHospitalisations.hospitalisations;
+      lastDayMoreHospitalisations.dateDifference = moment(graphData[graphData.length - 1].date).diff(moment(lastDayHigherHospitalisations.date), 'days');
       logger.debug(`${lastDayMoreHospitalisations.dateDifference} days since a higher number of people in hospital - ${lastDayMoreHospitalisations.date}(${lastDayMoreHospitalisations.hospitalisations})`);
   }
 
