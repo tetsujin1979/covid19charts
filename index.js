@@ -1,25 +1,13 @@
 'use strict';
+
 const fs = require('fs');
 const log4js = require('log4js');
 
-const deaths = require('./deaths');
-const cases = require('./cases');
-const swabs = require('./swabs');
-const vaccinations = require('./vaccinations');
-const hospitalisations = require('./hospitalisations');
-
 const constants = require("./constants");
+const metrics = require("./metrics");
 
 log4js.configure(constants.loggerConfiguration);
 const logger = log4js.getLogger('index');
-
-const metrics = {
-    cases: cases,
-    deaths: deaths,
-    swabs: swabs,
-    vaccinations: vaccinations,
-    hospitalisations: hospitalisations
-};
 
 if (process.argv.length == 3) {
     const metric = metrics[process.argv[2]];
