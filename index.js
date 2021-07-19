@@ -4,7 +4,7 @@ const fs = require('fs');
 const log4js = require('log4js');
 
 const constants = require("./constants");
-const metrics = require("./metrics");
+const metrics = require("./metrics").metrics;
 
 log4js.configure(constants.loggerConfiguration);
 const logger = log4js.getLogger('index');
