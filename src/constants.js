@@ -1,3 +1,5 @@
+const propertiesReader = require('properties-reader');
+
 const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 const oneMonthAgo = new Date();
@@ -28,6 +30,8 @@ const createTweet = (status, url) => {
     };
 };
 
+const properties = propertiesReader('application.properties');
+
 exports.days = () => days;
 exports.oneMonthAgo = () => oneMonthAgo;
 
@@ -35,4 +39,4 @@ exports.createTweet = createTweet;
 exports.difference = difference;
 exports.valueAndString = valueAndString;
 
-exports.debug = () => true;
+exports.debug = () => ((properties.get('main.application.debug') === 'true') || (process.env.debug === 'true'));
