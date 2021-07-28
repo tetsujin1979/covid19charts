@@ -1,13 +1,12 @@
 'use strict';
 
 const fs = require('fs');
-const log4js = require('log4js');
 
 const constants = require("./constants");
+const log4jsHelper = require('./log4jsHelper');
 const metrics = require("./metrics").metrics;
 
-log4js.configure(constants.loggerConfiguration);
-const logger = log4js.getLogger('index');
+const logger = log4jsHelper.getLogger('index');
 
 if (process.argv.length == 3) {
     const metric = metrics[process.argv[2]];

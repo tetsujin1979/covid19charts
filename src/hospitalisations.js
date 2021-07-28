@@ -1,16 +1,14 @@
-const fs = require('fs');
 const moment = require('moment');
-const log4js = require("log4js");
 
 const chartHelper = require("./chartHelper");
-const twitterHelper = require("./twitterHelper");
 const constants = require("./constants");
+const log4jsHelper = require('./log4jsHelper');
+const twitterHelper = require("./twitterHelper");
 
-log4js.configure(constants.loggerConfiguration);
-const logger = log4js.getLogger('hospitalisations');
+const logger = log4jsHelper.getLogger('hospitalisations');
 
-const hashtag = constants.hashtag;
-const days = constants.days;
+const days = constants.days();
+const oneMonthAgo = constants.oneMonthAgo();
 
 const graphData = new Array();
 
@@ -32,33 +30,30 @@ const dailyICU = {
   type: "line"
 };
 
-const oneMonthAgo = constants.oneMonthAgo;
-
 function processData(covidData) {
   logger.info('Processing daily hospitalisations');
-  covidData.forEach(function(item, index) {
-    if (item.hasOwnProperty("dateString") && item.hasOwnProperty("hospitalisations") && item.hasOwnProperty("icu")) {
-      let date = new Date(item.dateString);
-      let hospitalisationData = {
-        date: date,
-        hospitalisations: item.hospitalisations,
-        icu: item.icu
-      }
-      if (index > 7) {
-        let today = covidData[index];
-        let yesterday = covidData[index - 1];
-        let twoDaysAgo = covidData[index - 2];
-        let threeDaysAgo = covidData[index - 3];
-        let fourDaysAgo = covidData[index - 4];
-        let fiveDaysAgo = covidData[index - 5];
-        let sixDayAgo = covidData[index - 6];
-        let weeklyHospitalisations = today.hospitalisations + yesterday.hospitalisations + twoDaysAgo.hospitalisations + threeDaysAgo.hospitalisations + fourDaysAgo.hospitalisations + fiveDaysAgo.hospitalisations + sixDayAgo.hospitalisations;
-        let weeklyICU = today.icu + yesterday.icu + twoDaysAgo.icu + threeDaysAgo.icu + fourDaysAgo.icu + fiveDaysAgo.icu + sixDayAgo.icu;
-        hospitalisationData.sevenDayAverageHospitalisations = (weeklyHospitalisations / 7).toFixed(2);
-        hospitalisationData.sevenDayAverageICU = (weeklyICU / 7).toFixed(2);
-      }
-      graphData.push(hospitalisationData);
+  covidData.filter(item => (item.hasOwnProperty("dateString") && item.hasOwnProperty("hospitalisations") && item.hasOwnProperty("icu")))
+           .forEach(function(item, index) {
+    let date = new Date(item.dateString);
+    let hospitalisationData = {
+      date: date,
+      hospitalisations: item.hospitalisations,
+      icu: item.icu
     }
+    if (index > 7) {
+      let today = covidData[index];
+      let yesterday = covidData[index - 1];
+      let twoDaysAgo = covidData[index - 2];
+      let threeDaysAgo = covidData[index - 3];
+      let fourDaysAgo = covidData[index - 4];
+      let fiveDaysAgo = covidData[index - 5];
+      let sixDayAgo = covidData[index - 6];
+      let weeklyHospitalisations = today.hospitalisations + yesterday.hospitalisations + twoDaysAgo.hospitalisations + threeDaysAgo.hospitalisations + fourDaysAgo.hospitalisations + fiveDaysAgo.hospitalisations + sixDayAgo.hospitalisations;
+      let weeklyICU = today.icu + yesterday.icu + twoDaysAgo.icu + threeDaysAgo.icu + fourDaysAgo.icu + fiveDaysAgo.icu + sixDayAgo.icu;
+      hospitalisationData.sevenDayAverageHospitalisations = (weeklyHospitalisations / 7).toFixed(2);
+      hospitalisationData.sevenDayAverageICU = (weeklyICU / 7).toFixed(2);
+    }
+    graphData.push(hospitalisationData);
   });
 
   header = '📅 ' + moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM YYYY');
@@ -151,18 +146,16 @@ function processDailyHospitalisationData() {
       logger.debug(`${lastDayMoreICU.dateDifference} days since a higher number of people in ICU - ${lastDayMoreICU.date}(${lastDayMoreICU.icu})`);
   }
 
-  let tweet = header +
-              `\n🏥 Hospitalisations` +
-              `\nCurrent: ${currentHospitalisations}` +
+  const status = header +
+              `\n🏥 Hospitalisations\nCurrent: ${currentHospitalisations}` +
               (lastDayLessHospitalisations.dateDifference > 14 ? `(Lowest since ${moment(lastDayLessHospitalisations.date).format('dddd, Do MMMM yyyy')} - ${lastDayLessHospitalisations.hospitalisations})`: '') +
               (lastDayMoreHospitalisations.dateDifference > 14 ? `(Highest since ${moment(lastDayMoreHospitalisations.date).format('dddd, Do MMMM yyyy')} - ${lastDayMoreHospitalisations.hospitalisations})`: '') +
               `\nICU: ${currentICU}` +
               (lastDayLessICU.dateDifference > 14 ? `(Lowest since ${moment(lastDayLessICU.date).format('dddd, Do MMMM yyyy')} - ${lastDayLessICU.icu})`: '') +
-              (lastDayMoreICU.dateDifference > 14 ? `(Highest since ${moment(lastDayMoreICU.date).format('dddd, Do MMMM yyyy')} - ${lastDayMoreICU.icu})`: '') +
-              '\n' + 
-              `\n ${hashtag}`;
+              (lastDayMoreICU.dateDifference > 14 ? `(Highest since ${moment(lastDayMoreICU.date).format('dddd, Do MMMM yyyy')} - ${lastDayMoreICU.icu})`: '');
 //               + '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=deaths&dateSelection=lastTwoMonths&graphType=normal&displayType=graph&trendLine=false';
 
+  let tweet = constants.createTweet(status, '');
   let configuration = generateConfiguration(labels, dailyHospitalisations, dailyICU, "Hospitalisations");
   let b64Content = chartHelper.writeChart('hospitalisations/daily.png', configuration);
   twitterHelper.tweetChart(b64Content, tweet, processHospitalisationsByDay);
@@ -189,31 +182,23 @@ function processHospitalisationsByDay(inReplyToId) {
   let lastWeeksICU = dailyICU.data[dailyICU.data.length - 2];
   let previousWeeksICU = dailyICU.data[dailyICU.data.length - 3];
 
-  let lastWeeksHospitalisationChange = currentHospitalisations - lastWeeksHospitalisations;
-  let previousWeeksHospitalisationChange = currentHospitalisations - previousWeeksHospitalisations;
+  let lastWeeksHospitalisationChange = constants.difference(currentHospitalisations, lastWeeksHospitalisations);
+  let previousWeeksHospitalisationChange = constants.difference(currentHospitalisations, previousWeeksHospitalisations);
 
-  let lastWeeksHospitalisationPercentageChange = ((lastWeeksHospitalisationChange * 100) / lastWeeksHospitalisations).toFixed(2);
-  let previousWeeksHospitalisationPercentageChange = ((previousWeeksHospitalisationChange * 100) / previousWeeksHospitalisations).toFixed(2);
+  let lastWeeksICUChange = constants.difference(currentICU, lastWeeksICU);
+  let previousWeeksICUChange = constants.difference(currentICU, previousWeeksICU);
 
-  let lastWeeksICUChange = currentICU - lastWeeksICU;
-  let previousWeeksICUChange = currentICU - previousWeeksICU;
+  const status = '🏥 Hospitalisations: By day\nDate: Hospitalised(Diff | % diff)' +
+                 `\n${moment(graphData[graphData.length - 1].date).format('ddd, Do MMMM')}: ${currentHospitalisations}` + 
+                 `\n${moment(graphData[graphData.length - 8].date).format('ddd, Do MMMM')}: ${lastWeeksHospitalisations}${lastWeeksHospitalisationChange.toString}` +
+                 `\n${moment(graphData[graphData.length - 15].date).format('ddd, Do MMMM')}: ${previousWeeksHospitalisations}${previousWeeksHospitalisationChange.toString}` +
+                 '\n\nDate: ICU(Diff | % diff)' +
+                 `\n${moment(graphData[graphData.length - 1].date).format('ddd, Do MMMM')}: ${currentICU}` + 
+                 `\n${moment(graphData[graphData.length - 8].date).format('ddd, Do MMMM')}: ${lastWeeksICU}${lastWeeksICUChange.toString}` +
+                 `\n${moment(graphData[graphData.length - 15].date).format('ddd, Do MMMM')}: ${previousWeeksICU}${previousWeeksICUChange.toString}`;
 
-  let lastWeeksICUPercentageChange = ((lastWeeksICUChange * 100) / lastWeeksICU).toFixed(2);
-  let previousWeeksICUPercentageChange = ((previousWeeksICUChange * 100) / previousWeeksICU).toFixed(2);
-
-  tweet = `🏥 Hospitalisations: By day` +
-          '\nDate: Hospitalised(Diff | % diff)' +
-          '\n' + moment(graphData[graphData.length - 1].date).format('ddd, Do MMMM') + ': ' + currentHospitalisations + 
-          '\n' + moment(graphData[graphData.length - 8].date).format('ddd, Do MMMM') + ': ' + lastWeeksHospitalisations + '(' + lastWeeksHospitalisationChange + ' | ' + lastWeeksHospitalisationPercentageChange + '%)' +
-          '\n' + moment(graphData[graphData.length - 15].date).format('ddd, Do MMMM') + ': ' + previousWeeksHospitalisations + '(' + previousWeeksHospitalisationChange + ' | ' + previousWeeksHospitalisationPercentageChange + '%)' +
-          '\n' +
-          '\nDate: ICU(Diff | % diff)' +
-          '\n' + moment(graphData[graphData.length - 1].date).format('ddd, Do MMMM') + ': ' + currentICU + 
-          '\n' + moment(graphData[graphData.length - 8].date).format('ddd, Do MMMM') + ': ' + lastWeeksICU + '(' + lastWeeksICUChange + ' | ' + lastWeeksICUPercentageChange + '%)' +
-          '\n' + moment(graphData[graphData.length - 15].date).format('ddd, Do MMMM') + ': ' + previousWeeksICU + '(' + previousWeeksICUChange + ' | ' + previousWeeksICUPercentageChange + '%)' +
-          '\n\n' + hashtag;
-           // + '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=cases&dateSelection=lastTwoMonths&graphType=byWeekday&day=' + day + '&displayType=graph&trendLine=false';
-
+  // + '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=cases&dateSelection=lastTwoMonths&graphType=byWeekday&day=' + day + '&displayType=graph&trendLine=false';
+  let tweet = constants.createTweet(status, '');
   let configuration = generateConfiguration(labels, dailyHospitalisations, dailyICU, "Hospitalisations");
   let b64Content = chartHelper.writeChart('hospitalisations/byDay.png', configuration);
   twitterHelper.tweetChart(b64Content, tweet, function() { }, inReplyToId);

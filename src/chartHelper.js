@@ -1,13 +1,9 @@
 const { ChartJSNodeCanvas } = require('chartjs-node-canvas');
 const fs = require('fs');
-const fsPromises = require('fs').promises;
-const log4js = require("log4js");
 const Canvas = require("canvas");
 
-const constants = require("./constants");
-
-log4js.configure(constants.loggerConfiguration);
-const logger = log4js.getLogger('writeChartToFile');
+const log4jsHelper = require('./log4jsHelper');
+const logger = log4jsHelper.getLogger('chartHelper');
 
 const width = 1600;
 const height = 900;

@@ -1,29 +1,21 @@
-const fs = require('fs');
 const moment = require('moment');
-const log4js = require("log4js");
 const Decimal = require('decimal.js');
 
 const chartHelper = require("./chartHelper");
-const twitterHelper = require("./twitterHelper");
 const constants = require("./constants");
+const log4jsHelper = require('./log4jsHelper');
+const twitterHelper = require("./twitterHelper");
 
-const days = constants.days;
+const days = constants.days();
+const oneMonthAgo = constants.oneMonthAgo();
 
-const newRecord = '(🥇 New Record!)';
+const graphData = new Array();
+const records = new Array();
 
-log4js.configure(constants.loggerConfiguration);
-const logger = log4js.getLogger('vaccinations');
-
-const hashtag = constants.hashtag;
+const logger = log4jsHelper.getLogger('vaccinations');
 
 const population = 4977400;
 const over16 = 3749001;
-
-const graphData = new Array();
-const oneMonthAgo = constants.oneMonthAgo;
-
-let labels = "";
-let records = new Array();
 
 let dailyFirstDoseRecord = false;
 let dailySecondDoseRecord = false;
@@ -93,59 +85,58 @@ function processData(covidData) {
   let totalFirstDose = null;
   let totalSecondDose = null;
   let totalSingleDose = null;
-  covidData.forEach(function(item, index) {
-    if (item.hasOwnProperty("dateString") && item.hasOwnProperty("firstDose")) {
-      let date = new Date(item.dateString);
-      totalFirstDose = (totalFirstDose == null) ? new Decimal(item.firstDose) : (totalFirstDose.plus(new Decimal(item.firstDose)));
-      let over16FirstDosePercent = totalFirstDose.times(100).dividedBy(over16);
-      let over16SecondDosePercent = null;
-      let over16SingleDosePercent = null;
-      if (item.hasOwnProperty("secondDose")) {
-        totalSecondDose =  (totalSecondDose == null) ? new Decimal(item.secondDose) : (totalSecondDose.plus(new Decimal(item.secondDose)));
-        over16SecondDosePercent = totalSecondDose.times(100).dividedBy(over16);
-      }
-      if (item.hasOwnProperty("singleDose")) {
-        totalSingleDose = (totalSingleDose == null) ? new Decimal(item.singleDose) : (totalSingleDose.plus(new Decimal(item.singleDose)));
-        over16SingleDosePercent = totalSingleDose.times(100).dividedBy(over16);
-      }
-      let totalDailyDoses = Decimal.sum(item.firstDose, (item.hasOwnProperty("secondDose") ? item.secondDose : 0), (item.hasOwnProperty("singleDose") ? item.singleDose : 0));
-      let vaccinatedData = {
-        date: date,
-        firstDose: new Decimal(item.firstDose),
-        secondDose: new Decimal(item.hasOwnProperty("secondDose") ? item.secondDose : 0),
-        singleDose: new Decimal(item.hasOwnProperty("singleDose") ? item.singleDose : 0),
-        totalDailyDoses: totalDailyDoses,
-        totalFirstDose: totalFirstDose,
-        totalSecondDose: totalSecondDose,
-        totalSingleDose: totalSingleDose,
-        over16TotalFirstDoses: over16FirstDosePercent,
-        over16TotalSecondDoses: over16SecondDosePercent,
-        over16TotalSingleDoses: over16SingleDosePercent
-      };
-      if (index > 7 && graphData.length > 7) {
-        let today = graphData[graphData.length - 1];
-        let yesterday = graphData[graphData.length - 2];
-        let twoDaysAgo = graphData[graphData.length - 3];
-        let threeDaysAgo = graphData[graphData.length - 4];
-        let fourDaysAgo = graphData[graphData.length - 5];
-        let fiveDaysAgo = graphData[graphData.length - 6];
-        let sixDayAgo = graphData[graphData.length - 7];
-        let sevenDayTotalFirstDoses = Decimal.sum(today.firstDose, yesterday.firstDose, twoDaysAgo.firstDose, threeDaysAgo.firstDose, fourDaysAgo.firstDose, fiveDaysAgo.firstDose, sixDayAgo.firstDose);
-        let sevenDayTotalSecondDoses = Decimal.sum(today.secondDose, yesterday.secondDose, twoDaysAgo.secondDose, threeDaysAgo.secondDose, fourDaysAgo.secondDose, fiveDaysAgo.secondDose, sixDayAgo.secondDose);
-        let sevenDayTotalSingleDoses = Decimal.sum(testUndefined(today.singleDose), testUndefined(yesterday.singleDose), testUndefined(twoDaysAgo.singleDose), testUndefined(threeDaysAgo.singleDose), testUndefined(fourDaysAgo.singleDose), testUndefined(fiveDaysAgo.singleDose), testUndefined(sixDayAgo.singleDose));
-        vaccinatedData.sevenDayAverageFirstDose = sevenDayTotalFirstDoses.dividedBy(7);
-        vaccinatedData.sevenDayAverageSecondDose = sevenDayTotalSecondDoses.dividedBy(7);
-        vaccinatedData.sevenDayAverageSingleDose = sevenDayTotalSingleDoses.dividedBy(7);
-        if (date.getDay() === 0) {
-          vaccinatedData.weeklyFirstDoses = sevenDayTotalFirstDoses;
-          vaccinatedData.weeklySecondDoses = sevenDayTotalSecondDoses;
-          vaccinatedData.weeklySingleDoses = sevenDayTotalSingleDoses;
-          vaccinatedData.weeklyTotalDoses = Decimal.sum(sevenDayTotalFirstDoses, sevenDayTotalSecondDoses, sevenDayTotalSingleDoses);
-        }
-
-      }
-      graphData.push(vaccinatedData);
+  covidData.filter(item => (item.hasOwnProperty("dateString") && item.hasOwnProperty("firstDose")))
+           .forEach(function(item, index) {
+    let date = new Date(item.dateString);
+    totalFirstDose = (totalFirstDose == null) ? new Decimal(item.firstDose) : (totalFirstDose.plus(new Decimal(item.firstDose)));
+    let over16FirstDosePercent = totalFirstDose.times(100).dividedBy(over16);
+    let over16SecondDosePercent = null;
+    let over16SingleDosePercent = null;
+    if (item.hasOwnProperty("secondDose")) {
+      totalSecondDose =  (totalSecondDose == null) ? new Decimal(item.secondDose) : (totalSecondDose.plus(new Decimal(item.secondDose)));
+      over16SecondDosePercent = totalSecondDose.times(100).dividedBy(over16);
     }
+    if (item.hasOwnProperty("singleDose")) {
+      totalSingleDose = (totalSingleDose == null) ? new Decimal(item.singleDose) : (totalSingleDose.plus(new Decimal(item.singleDose)));
+      over16SingleDosePercent = totalSingleDose.times(100).dividedBy(over16);
+    }
+    let totalDailyDoses = Decimal.sum(item.firstDose, (item.hasOwnProperty("secondDose") ? item.secondDose : 0), (item.hasOwnProperty("singleDose") ? item.singleDose : 0));
+    let vaccinatedData = {
+      date: date,
+      firstDose: new Decimal(item.firstDose),
+      secondDose: new Decimal(item.hasOwnProperty("secondDose") ? item.secondDose : 0),
+      singleDose: new Decimal(item.hasOwnProperty("singleDose") ? item.singleDose : 0),
+      totalDailyDoses: totalDailyDoses,
+      totalFirstDose: totalFirstDose,
+      totalSecondDose: totalSecondDose,
+      totalSingleDose: totalSingleDose,
+      over16TotalFirstDoses: over16FirstDosePercent,
+      over16TotalSecondDoses: over16SecondDosePercent,
+      over16TotalSingleDoses: over16SingleDosePercent
+    };
+    if (index > 7 && graphData.length > 7) {
+      let today = graphData[graphData.length - 1];
+      let yesterday = graphData[graphData.length - 2];
+      let twoDaysAgo = graphData[graphData.length - 3];
+      let threeDaysAgo = graphData[graphData.length - 4];
+      let fourDaysAgo = graphData[graphData.length - 5];
+      let fiveDaysAgo = graphData[graphData.length - 6];
+      let sixDayAgo = graphData[graphData.length - 7];
+      let sevenDayTotalFirstDoses = Decimal.sum(today.firstDose, yesterday.firstDose, twoDaysAgo.firstDose, threeDaysAgo.firstDose, fourDaysAgo.firstDose, fiveDaysAgo.firstDose, sixDayAgo.firstDose);
+      let sevenDayTotalSecondDoses = Decimal.sum(today.secondDose, yesterday.secondDose, twoDaysAgo.secondDose, threeDaysAgo.secondDose, fourDaysAgo.secondDose, fiveDaysAgo.secondDose, sixDayAgo.secondDose);
+      let sevenDayTotalSingleDoses = Decimal.sum(testUndefined(today.singleDose), testUndefined(yesterday.singleDose), testUndefined(twoDaysAgo.singleDose), testUndefined(threeDaysAgo.singleDose), testUndefined(fourDaysAgo.singleDose), testUndefined(fiveDaysAgo.singleDose), testUndefined(sixDayAgo.singleDose));
+      vaccinatedData.sevenDayAverageFirstDose = sevenDayTotalFirstDoses.dividedBy(7);
+      vaccinatedData.sevenDayAverageSecondDose = sevenDayTotalSecondDoses.dividedBy(7);
+      vaccinatedData.sevenDayAverageSingleDose = sevenDayTotalSingleDoses.dividedBy(7);
+      if (date.getDay() === 0) {
+        vaccinatedData.weeklyFirstDoses = sevenDayTotalFirstDoses;
+        vaccinatedData.weeklySecondDoses = sevenDayTotalSecondDoses;
+        vaccinatedData.weeklySingleDoses = sevenDayTotalSingleDoses;
+        vaccinatedData.weeklyTotalDoses = Decimal.sum(sevenDayTotalFirstDoses, sevenDayTotalSecondDoses, sevenDayTotalSingleDoses);
+      }
+
+    }
+    graphData.push(vaccinatedData);
   });
   header = '📅 ' + moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM YYYY');
   processNewVaccinations();
@@ -154,6 +145,7 @@ function processData(covidData) {
 function processNewVaccinations() {
   logger.info('Processing daily vaccinations');
   initialise();
+  const labels = new Array();
   graphData.filter(item => item.date > oneMonthAgo)
            .forEach(function(value, index) {
     labels.push(value.date.toDateString());
@@ -209,19 +201,19 @@ function processNewVaccinations() {
   let totalDoses = Decimal.sum(finalEntry.totalFirstDose, finalEntry.totalSecondDose, finalEntry.totalSingleDose);
   let totalVaccinated = finalEntry.totalSecondDose.plus(finalEntry.totalSingleDose).toNumber().toLocaleString('en');
   let totalVaccinatedPercentage = finalEntry.over16TotalSecondDoses.plus(finalEntry.over16TotalSingleDoses);
-  let tweet = '💉 Vaccinations' +
-              '\n' + moment(finalEntry.date).format('dddd, Do MMMM') + 
-              `\n1st dose: ${dailyFirstDose}` +
-              `\n2nd dose: ${dailySecondDose}` +
-              `\nSingle dose: ${dailySingleDose}` +
-              `\nTotal: ${dailyTotalDoses}` +
-              '\n' +
-              '\nTotals' +
-              `\n1st dose: ${totalFirstDose}(${finalEntry.over16TotalFirstDoses.toFixed(2)}% of 16+)` +
-              `\nVaccinated(2nd + single doses): ${totalVaccinated}(${totalSecondDose} + ${totalSingleDose})(${totalVaccinatedPercentage.toFixed(2)}% of 16+)` +
-              '\n' + hashtag +
-              '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=vaccinations&dateSelection=lastTwoMonths&graphType=normal&displayType=graph&trendLine=false';
+  let status = '💉 Vaccinations' +
+            '\n' + moment(finalEntry.date).format('dddd, Do MMMM') + 
+            `\n1st dose: ${dailyFirstDose}` +
+            `\n2nd dose: ${dailySecondDose}` +
+            `\nSingle dose: ${dailySingleDose}` +
+            `\nTotal: ${dailyTotalDoses}` +
+            '\n' +
+            '\nTotals' +
+            `\n1st dose: ${totalFirstDose}(${finalEntry.over16TotalFirstDoses.toFixed(2)}% of 16+)` +
+            `\nVaccinated(2nd + single doses): ${totalVaccinated}(${totalSecondDose} + ${totalSingleDose})(${totalVaccinatedPercentage.toFixed(2)}% of 16+)`;
 
+  let url = 'https://tetsujin1979.github.io/covid19dashboard?dataSelection=vaccinations&dateSelection=lastTwoMonths&graphType=normal&displayType=graph&trendLine=false';
+  let tweet = constants.createTweet(status, url);
   let b64Content = new Array();
   let configuration = generateConfiguration(labels, firstDose, secondDose, singleDose, over16TotalFirstDoses, over16TotalSecondDoses, over16TotalSingleDoses, "Daily Vaccinations");
   b64Content.push(chartHelper.writeChart('vaccinations/dailyVaccinations.png', configuration));
@@ -233,6 +225,7 @@ function processNewVaccinations() {
 function processVaccinationsByDay(lastTweetId) {
   logger.info('Processing vaccinations by day');
   initialise();
+  const labels = new Array();
   let day = graphData[graphData.length - 1].date.getDay();
   graphData.filter(item => item.date > oneMonthAgo && item.date.getDay() == day)
            .forEach(function(value, index) {
@@ -294,7 +287,7 @@ function processVaccinationsByDay(lastTweetId) {
     records.push(`🥇 Record Total Doses adminstered on a ${days[day]}(${totalDailyDoses.string}) - Previous high: ${previousHighDate}(${previousHighTotalDoses})`);
   }
 
-  let tweet = '💉 Vaccinations: By day' +
+  let status = '💉 Vaccinations: By day' +
               '\n' + moment(graphData[graphData.length - 1].date).format('ddd, Do MMMM') + 
               `\n1st dose: ${dailyFirstDose.string}` +
               `\n2nd dose: ${dailySecondDose.string}` + 
@@ -303,20 +296,22 @@ function processVaccinationsByDay(lastTweetId) {
               '\n' + 
               '\n' + previousDay +
               '\nDoses(Diff | % diff)' + 
-              `\n1st: ${previousFirstDose.string}(${firstDoseChange.difference} | ${firstDoseChange.percentage})` +
-              `\n2nd: ${previousSecondDose.string}(${secondDoseChange.difference} | ${secondDoseChange.percentage})` +
-              ((previousSingleDose > 0) ? `\nSingle: ${previousSingleDose}(${singleDoseChange} | ${((singleDoseChange * 100) / previousSingleDose).toFixed(2)}%)` : '') +
-              `\nTotal: ${previousTotalDailyDoses.string}(${totalDosesChange.difference} | ${totalDosesChange.percentage})` +
-              `\n${hashtag}` +
-              '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=vaccinations&dateSelection=lastTwoMonths&graphType=byWeekday&day=' + day + '&displayType=graph&trendLine=false';
-
+              `\n1st: ${previousFirstDose.string}${firstDoseChange.toString}` +
+              `\n2nd: ${previousSecondDose.string}${secondDoseChange.toString}` +
+              ((previousSingleDose > 0) ? `\nSingle: ${previousSingleDose}${singleDoseChange.toString}` : '') +
+              `\nTotal: ${previousTotalDailyDoses.string}${totalDosesChange.toString}`;
+            
+  let url = 'https://tetsujin1979.github.io/covid19dashboard?dataSelection=vaccinations&dateSelection=lastTwoMonths&graphType=byWeekday&day=' + day + '&displayType=graph&trendLine=false';
+  let tweet = constants.createTweet(status, url);
   let configuration = generateConfiguration(labels, firstDose, secondDose, singleDose, over16TotalFirstDoses, over16TotalSecondDoses, over16TotalSingleDoses, "Vaccinations By Day - " + days[day]);
   let b64Content = chartHelper.writeChart('vaccinations/byDay.png', configuration);
   twitterHelper.tweetChart(b64Content, tweet, processWeeklyVaccinations, lastTweetId);
   }
 
 function processRollingSevenDayAverage(inReplyToId) {
+  logger.info('Processing rolling seven day average vaccinations');
   initialise();
+  const labels = new Array();
   let finalEntry = graphData[graphData.length - 1];
   let initialTestsIndex = 0;
   let todayDay = finalEntry.date.getDay();
@@ -343,7 +338,7 @@ function processRollingSevenDayAverage(inReplyToId) {
   let sevenDayAverageSingleDose = singleDose.data[singleDose.data.length - 1];
   let sevenDayAverageTotalDose = Decimal.sum(sevenDayAverageFirstDose, sevenDayAverageSecondDose, sevenDayAverageSingleDose);
   let firstDosesOver16Remaining = new Decimal(over16).minus(finalEntry.totalFirstDose.plus(finalEntry.totalSingleDose));
-  let estimatedDaysToTotalFirstDose = firstDosesOver16Remaining.dividedBy(sevenDayAverageFirstDose).ceil();
+  let estimatedDaysToTotalFirstDose = firstDosesOver16Remaining.dividedBy(Decimal.sum(sevenDayAverageFirstDose, sevenDayAverageSingleDose)).ceil();
   let secondDosesAdministered = sevenDayAverageSecondDose.times(estimatedDaysToTotalFirstDose);
   let singleDosesAdministered = sevenDayAverageSingleDose.times(estimatedDaysToTotalFirstDose);
   let vaccinated = finalEntry.totalSecondDose.plus(finalEntry.totalSingleDose)
@@ -351,7 +346,7 @@ function processRollingSevenDayAverage(inReplyToId) {
                                              .plus(singleDosesAdministered);
 
   let secondDosesOver16Remaining = new Decimal(over16).minus(vaccinated);
-  let estimatedDaysToTotalSecondDose = secondDosesOver16Remaining.dividedBy(new Decimal(sevenDayAverageSecondDose).plus(sevenDayAverageSingleDose)).ceil();
+  let estimatedDaysToTotalSecondDose = secondDosesOver16Remaining.dividedBy(Decimal.sum(sevenDayAverageFirstDose, sevenDayAverageSecondDose, sevenDayAverageSingleDose)).ceil();
 
   let finalFirstDose = new Date();
   finalFirstDose.setDate(finalFirstDose.getDate() + estimatedDaysToTotalFirstDose.toNumber());
@@ -359,7 +354,7 @@ function processRollingSevenDayAverage(inReplyToId) {
   let finalSecondDose = new Date(finalFirstDose.getTime());
   finalSecondDose.setDate(finalSecondDose.getDate() + estimatedDaysToTotalSecondDose.toNumber());
 
-  let tweet = `💉 Vaccinations: 7 day average` +
+  const status = `💉 Vaccinations: 7 day average` +
               `\n${moment(finalEntry.date).format('ddd, Do MMMM')}` + 
               `\n1st dose: ${sevenDayAverageFirstDose.toNumber().toLocaleString('en')}` + 
               `\n2nd dose: ${sevenDayAverageSecondDose.toNumber().toLocaleString('en')}` + 
@@ -368,10 +363,11 @@ function processRollingSevenDayAverage(inReplyToId) {
               `\n` +
               `\nEstimated final vaccinations` +
               `\n1st dose: ${moment(finalFirstDose).format('ddd, Do MMM')}(${estimatedDaysToTotalFirstDose} days)` +
-              `\nVaccinated: ${moment(finalSecondDose).format('ddd, Do MMM')}(${estimatedDaysToTotalFirstDose.plus(estimatedDaysToTotalSecondDose)} days)` +
-              `\n${hashtag}` +
-              `\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=vaccinations&dateSelection=lastTwoMonths&graphType=rollingSevenDayAverage&displayType=graph&trendLine=false`;
+              `\nVaccinated: ${moment(finalSecondDose).format('ddd, Do MMM')}(${estimatedDaysToTotalFirstDose.plus(estimatedDaysToTotalSecondDose)} days)`;
 
+  const url = `\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=vaccinations&dateSelection=lastTwoMonths&graphType=rollingSevenDayAverage&displayType=graph&trendLine=false`;
+
+  let tweet = constants.createTweet(status, url);
   let configuration = generateConfiguration(labels, firstDose, secondDose, singleDose, over16TotalFirstDoses, over16TotalSecondDoses, over16TotalSingleDoses, "Seven Day Average Vaccinations");
   let b64Content = chartHelper.writeChart('vaccinations/processRollingSevenDayAverage.png', configuration);
   twitterHelper.tweetChart(b64Content, tweet, processVaccinationsByDay, inReplyToId);
@@ -381,6 +377,7 @@ function processWeeklyVaccinations(inReplyToId) {
   if (graphData[graphData.length - 1].date.getDay() === 0) {
     logger.info("Processing weekly totals");
     initialise();
+    const labels = new Array();
     let weeklyData = graphData.filter(item => item.date > oneMonthAgo && item.date.getDay() === 0);
     weeklyData.forEach(function(value, index) { 
       labels.push('Week ending ' + value.date.toDateString());
@@ -430,21 +427,22 @@ function processWeeklyVaccinations(inReplyToId) {
     let singleDoseDifference = constants.difference(weeklySingleDose.value, previousWeeksSingleDose.value);
     let totalDifference = constants.difference(weeklyTotal.value, previousWeeksTotal.value);
 
-    let tweet = '💉 Vaccinations: Weekly totals' +
-              `\n${moment(weeklyData[weeklyData.length - 1].date).format('dddd, Do MMMM')}` + 
-              `\n1st dose: ${weeklyFirstDose.string}` + 
-              `\n2nd dose: ${weeklySecondDose.string}` +
-              (weeklySingleDose.value > 0 ? `\nSingle dose: ${weeklySingleDose.string}` : '') +
-              `\nTotal: ${weeklyTotal.string}` +  
-              '\n' +
-              `\n${moment(weeklyData[weeklyData.length - 2].date).format('dddd, Do MMMM')}` + 
-              `\n1st dose: ${previousWeeksFirstDose.string}(${firstDoseDifference.difference} | ${firstDoseDifference.percentage})` +
-              `\n2nd dose: ${previousWeeksSecondDose.string}(${secondDoseDifference.difference} | ${secondDoseDifference.percentage})` +
-              // (previousWeeksSingleDose > 0 ? `Single dose: ${previousWeeksSingleDoseString}(` + (singleDoseDifference > 0 ? '+' : '') + Number(singleDoseDifference).toLocaleString('en') + ')': '') +
-              `\nTotal: ${previousWeeksTotal.string}(${totalDifference.difference} | ${totalDifference.percentage})` + 
-              '\n' + hashtag +
-              '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=vaccinations&dateSelection=lastTwoMonths&graphType=weeklyTotal&displayType=graph&trendLine=false';
+    const status = '💉 Vaccinations: Weekly dosage totals' +
+                  `\n${moment(weeklyData[weeklyData.length - 1].date).format('ddd, Do MMM')}` + 
+                  `\n1st: ${weeklyFirstDose.string}` + 
+                  `\n2nd: ${weeklySecondDose.string}` +
+                  (weeklySingleDose.value > 0 ? `\nSingle: ${weeklySingleDose.string}` : '') +
+                  `\nTotal: ${weeklyTotal.string}` +  
+                  '\n' +
+                  `\n${moment(weeklyData[weeklyData.length - 2].date).format('ddd, Do MMM')}(Diff | % Diff)` + 
+                  `\n1st: ${previousWeeksFirstDose.string}${firstDoseDifference.toString}` +
+                  `\n2nd: ${previousWeeksSecondDose.string}${secondDoseDifference.toString}` +
+                  (previousWeeksSingleDose.value > 0 ? `\nSingle: ${previousWeeksSingleDose.string}${singleDoseDifference.toString}` : '') +
+                  `\nTotal: ${previousWeeksTotal.string}${totalDifference.toString}`;
 
+    const url = '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=vaccinations&dateSelection=lastTwoMonths&graphType=weeklyTotal&displayType=graph&trendLine=false';
+
+    let tweet = constants.createTweet(status, url);
     let configuration = generateConfiguration(labels, firstDose, secondDose, singleDose, over16TotalFirstDoses, over16TotalSecondDoses, over16TotalSingleDoses, "Weekly Vaccination Totals");
     over16TotalSingleDoses
     let b64Content = chartHelper.writeChart('vaccinations/weeklyTotals.png', configuration);
@@ -454,61 +452,6 @@ function processWeeklyVaccinations(inReplyToId) {
     tweetRecords(inReplyToId);
   }
 }
-/*
-function processSevenDayAverage(inReplyToId) {
-  let labels = new Array();
-  firstDose.data = new Array();
-  secondDose.data = new Array();
-  over16TotalFirstDoses.data = new Array();
-  over16TotalSecondDoses.data = new Array();
-  let initialTestsIndex = 0;
-  let todayDay = graphData[graphData.length - 1].date.getDay();
-  for (let counter = 6; counter < 13; counter++) {
-    if (graphData[counter].date.getDay() === todayDay) {
-      initialTestsIndex = counter;
-      break;
-    }
-  }
-  for (let counter = initialTestsIndex; counter < graphData.length; counter += 7) {
-    let today = graphData[counter];
-    let yesterday = graphData[counter - 1];
-    let twoDaysAgo = graphData[counter - 2];
-    let threeDaysAgo = graphData[counter - 3];
-    let fourDaysAgo = graphData[counter - 4];
-    let fiveDaysAgo = graphData[counter - 5];
-    let sixDayAgo = graphData[counter - 6];
-    let totalFirstDose = today.firstDose + yesterday.firstDose + twoDaysAgo.firstDose + threeDaysAgo.firstDose + fourDaysAgo.firstDose + fiveDaysAgo.firstDose + sixDayAgo.firstDose;
-    let totalSecondDose = today.secondDose + yesterday.secondDose + twoDaysAgo.secondDose + threeDaysAgo.secondDose + fourDaysAgo.secondDose + fiveDaysAgo.secondDose + sixDayAgo.secondDose;
-    let dailyDoses = totalFirstDose + totalSecondDose;
-    labels.push('Seven days to ' + today.date.toDateString());
-    firstDose.data.push((totalFirstDose / 7).toFixed(2));
-    secondDose.data.push((totalSecondDose / 7).toFixed(2));
-    over16TotalFirstDoses.data.push(today.totalFirstDose);
-    over16TotalSecondDoses.data.push(today.totalSecondDose);
-  }
-  let sevenDayAverageFirstDose = firstDose.data[firstDose.data.length - 1];
-  let sevenDayAverageSecondDose = secondDose.data[firstDose.data.length - 1];
-  let sevenDayAverageTotalDose = Number(sevenDayAverageFirstDose) + Number(sevenDayAverageSecondDose);
-  let previousSevenDayAverageFirstDose = firstDose.data[firstDose.data.length - 2];
-  let previousSevenDayAverageSecondDose = secondDose.data[firstDose.data.length - 2];
-  let previousSevenDayAverageTotalDose = Number(previousSevenDayAverageFirstDose) + Number(previousSevenDayAverageSecondDose);
-  let tweet = header +
-              '\n💉 7 day average vaccinations' +
-              '\n1st dose: ' + Number(sevenDayAverageFirstDose).toLocaleString('en') +
-              '\n2nd dose: ' + Number(sevenDayAverageSecondDose).toLocaleString('en') +
-              '\nTotal doses: ' + Number(sevenDayAverageTotalDose).toLocaleString('en') +
-              '\n' +
-              '\nPrevious average vaccinations' +
-              '\n1st doses: ' + Number(previousSevenDayAverageFirstDose).toLocaleString('en') +
-              '\n2nd doses: ' + Number(previousSevenDayAverageSecondDose).toLocaleString('en') +
-              '\nTotal doses: ' + Number(previousSevenDayAverageTotalDose).toLocaleString('en') +
-              '\n' + hashtag +
-              '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=vaccinations&dateSelection=lastTwoMonths&graphType=sevenDayAverage&displayType=graph&trendLine=false';
-
-  let configuration = generateConfiguration(labels, firstDose, secondDose, over16TotalFirstDoses, over16TotalSecondDoses);
-  writeChartToFile.processChart('vaccinations/sevenDayAverage.png', configuration, tweet, function() {}, inReplyToId);
-}
-*/
 
 function generateConfiguration(labels, firstDose, secondDose, singleDose, over16TotalFirstDoses, over16TotalSecondDoses, over16TotalSingleDoses, title) {
   return {
@@ -530,7 +473,8 @@ function generateConfiguration(labels, firstDose, secondDose, singleDose, over16
           stacked: true,
           position: "left",
           ticks: {
-            beginAtZero: true
+            beginAtZero: true,
+            min: 0
           },
           scaleLabel: {
             display: true,
@@ -540,7 +484,8 @@ function generateConfiguration(labels, firstDose, secondDose, singleDose, over16
           id: "VaccinatedAxis",
           position: "right",
           ticks: {
-            beginAtZero: true
+            beginAtZero: true,
+            min: 0
           },
           gridLines: {
             display: false
@@ -562,13 +507,13 @@ function generateDoughnutConfiguration(labels, firstDosePercentage, secondDosePe
       labels: ["Single Dose", "First Dose", "Second Dose"],
       datasets: [{
         label: 'First Dose label',
-        data: [singleDosePercentage, firstDosePercentage, (100 - (firstDosePercentage + singleDosePercentage))],
+        data: [singleDosePercentage, firstDosePercentage, (100 - (firstDosePercentage.plus(singleDosePercentage).toNumber()))],
         backgroundColor: ['rgba(150, 81, 159, 0.6)', 'rgba(237, 100, 127, .6)', 'rgba(228, 233, 237, 1)'],
         color: 'black',
         borderWidth: 1
       }, {
         label: 'Second Dose label',
-        data: [singleDosePercentage, secondDosePercentage, (100 - (secondDosePercentage + singleDosePercentage))],
+        data: [singleDosePercentage, secondDosePercentage, (100 - (secondDosePercentage.plus(singleDosePercentage).toNumber()))],
         backgroundColor: ['rgba(150, 81, 159, 0.6)', 'rgba(63, 63, 191, 0.6)', 'rgba(228, 233, 237, 1)'],
         color: 'yellow',
         borderWidth: 1
@@ -584,7 +529,6 @@ function generateDoughnutConfiguration(labels, firstDosePercentage, secondDosePe
 }
 
 function initialise() {
-  labels = new Array();
   firstDose.data = new Array();
   secondDose.data = new Array();
   singleDose.data = new Array();
@@ -601,6 +545,7 @@ function testUndefined(value) {
 }
 
 function tweetRecords(inReplyToId) {
+  logger.debug(`tweetRecords\trecords: ${records}\tinReplyToId: ${inReplyToId}`);
   twitterHelper.tweetRecords(records, inReplyToId);
 }
 
