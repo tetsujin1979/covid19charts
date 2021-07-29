@@ -16,8 +16,8 @@ module.exports = {
   plugins: [
     new CopyPlugin({
       patterns: [
-        { from: "img/", to: "./" },
-        { from: "properties/", to: "./" }
+        { from: "watermark.png", to: "./" },
+        { from: "application.properties", to: "./" }
       ]
     })
   ]
