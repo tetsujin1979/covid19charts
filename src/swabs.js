@@ -8,6 +8,7 @@ const twitterHelper = require("./twitterHelper");
 const logger = log4jsHelper.getLogger('swabs');
 
 const days = constants.days();
+const directory = constants.directories().swabs;
 const oneMonthAgo = constants.oneMonthAgo();
 
 const graphData = new Array();
@@ -123,7 +124,7 @@ function processNewSwabs() {
   const url = 'https://tetsujin1979.github.io/covid19dashboard?dataSelection=swabs&dateSelection=lastTwoMonths&graphType=normal&displayType=graph&trendLine=false';
   const tweet = constants.createTweet(status, url);
   let configuration = generateConfiguration(labels, percentagePositive, positiveSwabs, negativeSwabs, "Daily Swab Results");
-  let b64Content = chartHelper.writeChart('swabs/dailySwabs.png', configuration, );
+  let b64Content = chartHelper.writeChart(directory + '/dailySwabs.png', configuration, );
   twitterHelper.tweetChart(b64Content, tweet, processRollingSevenDayAverage);
 }
 
@@ -180,7 +181,7 @@ function processSwabsByDay(lastTweetId) {
   const url = `https://tetsujin1979.github.io/covid19dashboard?dataSelection=swabs&dateSelection=lastTwoMonths&graphType=byWeekday&day=${lastDay}&displayType=graph&trendLine=false`;
   const tweet = constants.createTweet(status, url);
   let configuration = generateConfiguration(labels, percentagePositive, positiveSwabs, negativeSwabs, "Swab Results By Day");
-  let b64Content = chartHelper.writeChart('swabs/swabsByDay.png', configuration);
+  let b64Content = chartHelper.writeChart(directory + '/swabsByDay.png', configuration);
   twitterHelper.tweetChart(b64Content, tweet, processWeeklyTotals, lastTweetId);
 }
 
@@ -229,7 +230,7 @@ function processRollingSevenDayAverage(inReplyToId) {
   const url = 'https://tetsujin1979.github.io/covid19dashboard?dataSelection=swabs&dateSelection=lastTwoMonths&graphType=rollingSevenDayAverage&displayType=graph&trendLine=false';
   const tweet = constants.createTweet(status, url);
   let configuration = generateConfiguration(labels, percentagePositive, positiveSwabs, negativeSwabs, "Seven Day Average Swab Results");
-  let b64Content = chartHelper.writeChart('swabs/rollingSevenDayAverage.png', configuration);
+  let b64Content = chartHelper.writeChart(directory + '/rollingSevenDayAverage.png', configuration);
   twitterHelper.tweetChart(b64Content, tweet, processSwabsByDay, inReplyToId);
 }
 
@@ -281,7 +282,7 @@ function processWeeklyTotals(inReplyToId) {
     const url = '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=swabs&dateSelection=lastTwoMonths&graphType=rollingSevenDayAverage&displayType=graph&trendLine=false';
     const tweet = constants.createTweet(status, url);
     let configuration = generateConfiguration(labels, percentagePositive, positiveSwabs, negativeSwabs, "Seven Day Average Swab Results");
-    let b64Content = chartHelper.writeChart('swabs/weeklyTotals.png', configuration);
+    let b64Content = chartHelper.writeChart(directory + '/weeklyTotals.png', configuration);
     twitterHelper.tweetChart(b64Content, tweet, tweetRecords, inReplyToId);
   } else {
     tweetRecords(inReplyToId);

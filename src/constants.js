@@ -33,6 +33,7 @@ const createTweet = (status, url) => {
 const properties = propertiesReader('application.properties');
 
 let debug = false;
+let environment = 'local';
 
 if (typeof process.env.debug === 'undefined') {
 
@@ -43,8 +44,34 @@ if (typeof process.env.debug === 'undefined') {
     debug = (process.env.debug === 'true');
 }
 
+if (typeof process.env.environment === 'undefined') {
+
+    environment = properties.get('main.application.environment');
+
+} else {
+
+    environment = process.env.environment;
+}
+
+const directories = {
+    local: {
+        cases: "cases",
+        deaths: "deaths", 
+        hospitalisations: "hospitalisations",
+        swabs: "swabs",
+        vaccinations: "vaccinations"
+    },
+    lambda: {
+        cases: "/tmp",
+        deaths: "/tmp", 
+        hospitalisations: "/tmp",
+        swabs: "/tmp",
+        vaccinations: "/tmp"
+    }
+}
 exports.days = () => days;
 exports.oneMonthAgo = () => oneMonthAgo;
+exports.directories = () => directories[environment];
 
 exports.createTweet = createTweet;
 exports.difference = difference;

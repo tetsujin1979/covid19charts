@@ -8,6 +8,7 @@ const twitterHelper = require("./twitterHelper");
 const logger = log4jsHelper.getLogger('deaths');
 
 const days = constants.days();
+const directory = constants.directories().deaths;
 const oneMonthAgo = constants.oneMonthAgo();
 
 const graphData = new Array();
@@ -81,7 +82,7 @@ function processNewDeaths() {
   const url = `https://tetsujin1979.github.io/covid19dashboard?dataSelection=deaths&dateSelection=lastTwoMonths&graphType=normal&displayType=graph&trendLine=false`;
   let tweet = constants.createTweet(status, url);
   let configuration = generateConfiguration(labels, totalDeaths, dailyDeaths, "Daily Deaths");
-  let b64Content = chartHelper.writeChart('deaths/daily.png', configuration);
+  let b64Content = chartHelper.writeChart(directory + '/daily.png', configuration);
   twitterHelper.tweetChart(b64Content, tweet, processWeeklyDeaths);
 }
 
@@ -150,7 +151,7 @@ function processWeeklyDeaths(inReplyToId) {
     const url = 'https://tetsujin1979.github.io/covid19dashboard?dataSelection=deaths&dateSelection=lastTwoMonths&graphType=normal&displayType=graph&trendLine=false';
     let tweet = constants.createTweet(status, url);
     let configuration = generateConfiguration(labels, totalDeaths, dailyDeaths, "Daily Deaths");
-    let b64Content = chartHelper.writeChart('deaths/weeklyDeaths.png', configuration);
+    let b64Content = chartHelper.writeChart(directory + '/weeklyDeaths.png', configuration);
     twitterHelper.tweetChart(b64Content, tweet, function() {}, inReplyToId);
   }
 }

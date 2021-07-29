@@ -8,6 +8,7 @@ const twitterHelper = require("./twitterHelper");
 const logger = log4jsHelper.getLogger('hospitalisations');
 
 const days = constants.days();
+const directory = constants.directories().hospitalisations;
 const oneMonthAgo = constants.oneMonthAgo();
 
 const graphData = new Array();
@@ -157,7 +158,7 @@ function processDailyHospitalisationData() {
 
   let tweet = constants.createTweet(status, '');
   let configuration = generateConfiguration(labels, dailyHospitalisations, dailyICU, "Hospitalisations");
-  let b64Content = chartHelper.writeChart('hospitalisations/daily.png', configuration);
+  let b64Content = chartHelper.writeChart(directory + '/daily.png', configuration);
   twitterHelper.tweetChart(b64Content, tweet, processHospitalisationsByDay);
 }
 
@@ -200,7 +201,7 @@ function processHospitalisationsByDay(inReplyToId) {
   // + '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=cases&dateSelection=lastTwoMonths&graphType=byWeekday&day=' + day + '&displayType=graph&trendLine=false';
   let tweet = constants.createTweet(status, '');
   let configuration = generateConfiguration(labels, dailyHospitalisations, dailyICU, "Hospitalisations");
-  let b64Content = chartHelper.writeChart('hospitalisations/byDay.png', configuration);
+  let b64Content = chartHelper.writeChart(directory + '/byDay.png', configuration);
   twitterHelper.tweetChart(b64Content, tweet, function() { }, inReplyToId);
 }
 

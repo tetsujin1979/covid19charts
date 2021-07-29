@@ -8,6 +8,7 @@ const twitterHelper = require("./twitterHelper");
 const logger = log4jsHelper.getLogger('cases');
 
 const days = constants.days();
+const directory = constants.directories().cases;
 const oneMonthAgo = constants.oneMonthAgo();
 
 const graphData = new Array();
@@ -125,7 +126,7 @@ function processNewCases() {
     const url = 'https://tetsujin1979.github.io/covid19dashboard?dataSelection=cases&dateSelection=lastTwoMonths&graphType=normal&displayType=graph&trendLine=true';
     let tweet = constants.createTweet(status, url);
     let configuration = generateConfiguration(labels, totalCases, dailyCases, "Daily Cases");
-    let b64Content = chartHelper.writeChart('cases/dailyCases.png', configuration);
+    let b64Content = chartHelper.writeChart(directory + '/dailyCases.png', configuration);
     twitterHelper.tweetChart(b64Content, tweet, processRollingSevenDayAverage);
 }
 
@@ -205,7 +206,7 @@ function processRollingSevenDayAverage(inReplyToId) {
 
     let tweet = constants.createTweet(status, url);
     let configuration = generateConfiguration(labels, totalCases, dailyCases, "Seven Day Average Cases");
-    let b64Content = chartHelper.writeChart('cases/rollingSevenDayAverage.png', configuration);
+    let b64Content = chartHelper.writeChart(directory + '/rollingSevenDayAverage.png', configuration);
     twitterHelper.tweetChart(b64Content, tweet, processCasesByDay, inReplyToId);
 }
 
@@ -238,7 +239,7 @@ function processCasesByDay(inReplyToId) {
     const url = `https://tetsujin1979.github.io/covid19dashboard?dataSelection=cases&dateSelection=lastTwoMonths&graphType=byWeekday&day=${day}&displayType=graph&trendLine=false`;
     let tweet = constants.createTweet(status, url);
     let configuration = generateConfiguration(labels, totalCases, dailyCases, "Daily Cases By Day - " + days[day]);
-    let b64Content = chartHelper.writeChart('cases/byDay.png', configuration);
+    let b64Content = chartHelper.writeChart(directory + '/byDay.png', configuration);
     twitterHelper.tweetChart(b64Content, tweet, processWeeklyCases, inReplyToId);
 }
 
@@ -305,7 +306,7 @@ function processWeeklyCases(inReplyToId) {
         const url = 'https://tetsujin1979.github.io/covid19dashboard?dataSelection=cases&dateSelection=lastTwoMonths&graphType=rollingSevenDayAverage&displayType=graph&trendLine=false';
         let tweet = constants.createTweet(status, url);
         let configuration = generateConfiguration(labels, totalCases, dailyCases, "Weekly cases");
-        let b64Content = chartHelper.writeChart('cases/weeklyCases.png', configuration);
+        let b64Content = chartHelper.writeChart(directory + '/weeklyCases.png', configuration);
         twitterHelper.tweetChart(b64Content, tweet, function() { }, inReplyToId);        
     }
 }
