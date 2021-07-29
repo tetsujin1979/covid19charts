@@ -76,10 +76,13 @@ function generateStatus(tweet) {
   if (tweet.status.length < MAX_TWEET_LENGTH) {
     retVal = tweet.status;
     if (retVal.length + URL_LENGTH < MAX_TWEET_LENGTH) {
+      const statusLength = retVal.length + URL_LENGTH;
       retVal = tweet.status + "\n" + tweet.url;
-      if (retVal.length + hashtag.length < MAX_TWEET_LENGTH) {
+      if (statusLength + hashtag.length < MAX_TWEET_LENGTH) {
         retVal = retVal + "\n" + hashtag;
       }
+    } else if (retVal.length + hashtag.length < MAX_TWEET_LENGTH) {
+      retVal = retVal + "\n" + hashtag;    
     }
   }
   return retVal;
