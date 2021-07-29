@@ -31,6 +31,7 @@ const createTweet = (status, url) => {
 };
 
 const properties = propertiesReader('application.properties');
+const environmentDebugVariable = (typeof process.env.debug === 'undefined') ? false : (process.env.debug === 'true');
 
 exports.days = () => days;
 exports.oneMonthAgo = () => oneMonthAgo;
@@ -39,4 +40,4 @@ exports.createTweet = createTweet;
 exports.difference = difference;
 exports.valueAndString = valueAndString;
 
-exports.debug = () => ((properties.get('main.application.debug') === 'true') || (process.env.debug === 'true'));
+exports.debug = () => (properties.get('main.application.debug') || environmentDebugVariable);
