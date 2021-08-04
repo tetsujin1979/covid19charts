@@ -1,12 +1,10 @@
 'use strict';
-
 const fetch = require('node-fetch');
-const metrics = require("./metrics");
-const log4js = require('log4js');
-const constants = require("./constants");
 
-log4js.configure(constants.loggerConfiguration);
-const logger = log4js.getLogger('handler');
+const log4jsHelper = require('./log4jsHelper');
+const metrics = require("./metrics").metrics;
+
+const logger = log4jsHelper.getLogger('handler');
 
 const url = "https://raw.githubusercontent.com/tetsujin1979/covid19dashboard/main/data.json";
 const settings = { method: "Get" };
