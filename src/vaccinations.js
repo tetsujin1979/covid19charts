@@ -294,7 +294,7 @@ function processVaccinationsByDay(lastTweetId) {
               `\nSingle: ${dailySingleDose.string}` +
               `\nTotal: ${totalDailyDoses.string}` + 
               '\n' + 
-              '\nDoses ${previousDay}(Diff | % diff)' + 
+              `\nDoses ${previousDay}(Diff | % diff)` + 
               `\n1st: ${previousFirstDose.string}${firstDoseChange.toString}` +
               `\n2nd: ${previousSecondDose.string}${secondDoseChange.toString}` +
               `\nSingle: ${previousSingleDose.string}${singleDoseChange.toString}` +
