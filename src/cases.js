@@ -61,7 +61,6 @@ function processData(covidData) {
         }
         graphData.push(caseData);
     });
-    header = '📅 ' + moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM YYYY');
     processNewCases();
 }
 
@@ -119,9 +118,9 @@ function processNewCases() {
                    `\n${moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM')}: ${newCases.toLocaleString('en')}` + 
 //                '\nTotal cases: ' + Number(totalCases.data[totalCases.data.length - 1]).toLocaleString('en') + 
                 // If it's been more than 14 days since a lower number of new cases, add that to the tweet
-                (lastDayLessCases.dateDifference > 14 ? `\nLowest since ${moment(lastDayLessCases.date).format('dddd, Do MMMM')}(${lastDayLessCases.cases})`: '') +
+                (lastDayLessCases.dateDifference > 14 ? `\nLowest since ${moment(lastDayLessCases.date).format('dddd, Do MMMM')}(${lastDayLessCases.cases.toLocaleString()})`: '') +
                 // If it's been more than 14 days since a higher number of new cases, add that to the tweet
-                (lastDayMoreCases.dateDifference > 14 ? `\nHighest since ${moment(lastDayMoreCases.date).format('dddd, Do MMMM')}(${lastDayMoreCases.cases})`: '');
+                (lastDayMoreCases.dateDifference > 14 ? `\nHighest since ${moment(lastDayMoreCases.date).format('dddd, Do MMMM')}(${lastDayMoreCases.cases.toLocaleString()})`: '');
 
     const url = 'https://tetsujin1979.github.io/covid19dashboard?dataSelection=cases&dateSelection=lastTwoMonths&graphType=normal&displayType=graph&trendLine=true';
     let tweet = constants.createTweet(status, url);
@@ -159,8 +158,8 @@ function processRollingSevenDayAverage(inReplyToId) {
     let previousDaysCasesDifference = constants.difference(newCases.value, previousDaysCases.value);
     let previousWeeksCasesDifference = constants.difference(newCases.value, previousWeeksCases.value);
 
-    let lessCases = graphData.filter(item => Number(item.sevenDayAverage) < Number(newCases));
-    let higherCases = graphData.filter(item => Number(item.sevenDayAverage) > Number(newCases));
+    let lessCases = graphData.filter(item => Number(item.sevenDayAverage) < Number(newCases.value));
+    let higherCases = graphData.filter(item => Number(item.sevenDayAverage) > Number(newCases.value));
     logger.debug(`Found ${lessCases.length} days with less cases`);
     logger.debug(`Found ${higherCases.length} days with more cases`);
     // An object for the last day with less cases than today
@@ -298,8 +297,8 @@ function processWeeklyCases(inReplyToId) {
         
         const status = `🦠 Cases: Weekly total\nDate: Cases(Difference | % difference)` +
                     `\n${moment(weeklyData[weeklyData.length - 1].date).format('dddd, Do MMMM')}: ${newCases.string}` + 
-                    ((lastWeekLessCases.dateDifference > 3) ? `(${lastWeekLessCases.dateDifference} weeks since a lower number of cases - ${moment(lastWeekLessCases.date).format('dddd, Do MMMM')}: ${lastWeekMoreCases.weeklyCases.toLocaleString('en')})` : '') +
-                    ((lastWeekMoreCases.dateDifference > 3) ? `(${lastWeekMoreCases.dateDifference} weeks since a higher number of cases - ${moment(lastWeekMoreCases.date).format('dddd, Do MMMM')}: ${lastWeekMoreCases.weeklyCases.toLocaleString('en')})` : '') +
+                    ((lastWeekLessCases.dateDifference > 3) ? `(Lowest number of cases in ${lastWeekLessCases.dateDifference} weeks - ${moment(lastWeekLessCases.date).format('dddd, Do MMMM')}: ${lastWeekMoreCases.weeklyCases.toLocaleString('en')})` : '') +
+                    ((lastWeekMoreCases.dateDifference > 3) ? `(Highest number of cases in ${lastWeekMoreCases.dateDifference} weeks - ${moment(lastWeekMoreCases.date).format('dddd, Do MMMM')}: ${lastWeekMoreCases.weeklyCases.toLocaleString('en')})` : '') +
                     `\n${moment(weeklyData[weeklyData.length - 2].date).format('dddd, Do MMMM')}: ${previousDaysCases.string}${previousDaysCasesDifference.toString}` +
                     `\n${moment(weeklyData[weeklyData.length - 3].date).format('dddd, Do MMMM')}: ${previousWeeksCases.string}${previousWeeksCasesDifference.toString}`;
 
