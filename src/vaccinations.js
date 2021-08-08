@@ -139,7 +139,6 @@ function processData(covidData) {
     }
     graphData.push(vaccinatedData);
   });
-  header = '📅 ' + moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM YYYY');
   processNewVaccinations();
 }
 
