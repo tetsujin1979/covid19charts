@@ -240,13 +240,13 @@ function processVaccinationsByDay(lastTweetId) {
   });
   let finalEntry = graphData[graphData.length - 1];
   let previousDay = moment(graphData[graphData.length - 8].date).format('ddd, Do MMMM');
-  let dailyFirstDose = constants.valueAndString(firstDose.data[firstDose.data.length - 1]);
-  let dailySecondDose = constants.valueAndString(secondDose.data[secondDose.data.length - 1]);
-  let dailySingleDose = constants.valueAndString(singleDose.data[singleDose.data.length - 1]);
+  let dailyFirstDose = constants.valueAndString(firstDose.data[firstDose.data.length - 1].toNumber());
+  let dailySecondDose = constants.valueAndString(secondDose.data[secondDose.data.length - 1].toNumber());
+  let dailySingleDose = constants.valueAndString(singleDose.data[singleDose.data.length - 1].toNumber());
 
-  let previousFirstDose = constants.valueAndString(firstDose.data[firstDose.data.length - 2]);
-  let previousSecondDose = constants.valueAndString(secondDose.data[secondDose.data.length - 2]);
-  let previousSingleDose = constants.valueAndString(singleDose.data[singleDose.data.length - 2]);
+  let previousFirstDose = constants.valueAndString(firstDose.data[firstDose.data.length - 2].toNumber());
+  let previousSecondDose = constants.valueAndString(secondDose.data[secondDose.data.length - 2].toNumber());
+  let previousSingleDose = constants.valueAndString(singleDose.data[singleDose.data.length - 2].toNumber());
   let previousTotalDailyDoses = constants.valueAndString(Decimal.sum(previousFirstDose.value, previousSecondDose.value, previousSingleDose.value));
 
   let totalFirstDose = constants.valueAndString(graphData[graphData.length - 1].totalFirstDose);
@@ -289,17 +289,16 @@ function processVaccinationsByDay(lastTweetId) {
   }
 
   let status = '💉 Vaccinations: By day' +
-              '\n' + moment(graphData[graphData.length - 1].date).format('ddd, Do MMMM') + 
-              `\n1st dose: ${dailyFirstDose.string}` +
-              `\n2nd dose: ${dailySecondDose.string}` + 
-              `\nSingle dose: ${dailySingleDose.string}` +
+              `\nDoses: ${moment(graphData[graphData.length - 1].date).format('ddd, Do MMMM')}` + 
+              `\n1st: ${dailyFirstDose.string}` +
+              `\n2nd: ${dailySecondDose.string}` + 
+              `\nSingle: ${dailySingleDose.string}` +
               `\nTotal: ${totalDailyDoses.string}` + 
               '\n' + 
-              '\n' + previousDay +
-              '\nDoses(Diff | % diff)' + 
+              '\nDoses ${previousDay}(Diff | % diff)' + 
               `\n1st: ${previousFirstDose.string}${firstDoseChange.toString}` +
               `\n2nd: ${previousSecondDose.string}${secondDoseChange.toString}` +
-              ((previousSingleDose > 0) ? `\nSingle: ${previousSingleDose}${singleDoseChange.toString}` : '') +
+              `\nSingle: ${previousSingleDose.string}${singleDoseChange.toString}` +
               `\nTotal: ${previousTotalDailyDoses.string}${totalDosesChange.toString}`;
             
   let url = 'https://tetsujin1979.github.io/covid19dashboard?dataSelection=vaccinations&dateSelection=lastTwoMonths&graphType=byWeekday&day=' + day + '&displayType=graph&trendLine=false';
