@@ -17,6 +17,7 @@ const logger = log4jsHelper.getLogger('vaccinations');
 
 const population = 4977400;
 const over16 = 3909392;
+const over12 = 4189292;
 
 let dailyFirstDoseRecord = false;
 let dailySecondDoseRecord = false;
