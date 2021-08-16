@@ -432,17 +432,17 @@ function processWeeklyVaccinations(inReplyToId) {
     let singleDoseDifference = constants.difference(weeklySingleDose.value.toNumber(), previousWeeksSingleDose.value.toNumber());
     let totalDifference = constants.difference(weeklyTotal.value.toNumber(), previousWeeksTotal.value.toNumber());
 
-    const status = '💉 Vaccinations: Weekly dosage totals' +
+    const status = '💉 Vaccinations: Weekly totals' +
                   `\n${moment(weeklyData[weeklyData.length - 1].date).format('ddd, Do MMM')}` + 
                   `\n1st: ${weeklyFirstDose.string}` + 
                   `\n2nd: ${weeklySecondDose.string}` +
-                  (weeklySingleDose.value > 0 ? `\nSingle: ${weeklySingleDose.string}` : '') +
+                  `\nSingle: ${weeklySingleDose.string}` +
                   `\nTotal: ${weeklyTotal.string}` +  
                   '\n' +
                   `\n${moment(weeklyData[weeklyData.length - 2].date).format('ddd, Do MMM')}(Diff | % Diff)` + 
                   `\n1st: ${previousWeeksFirstDose.string}${firstDoseDifference.toString}` +
                   `\n2nd: ${previousWeeksSecondDose.string}${secondDoseDifference.toString}` +
-                  (previousWeeksSingleDose.value > 0 ? `\nSingle: ${previousWeeksSingleDose.string}${singleDoseDifference.toString}` : '') +
+                  `\nSingle: ${previousWeeksSingleDose.string}${singleDoseDifference.toString}` +
                   `\nTotal: ${previousWeeksTotal.string}${totalDifference.toString}`;
 
     const url = '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=vaccinations&dateSelection=lastTwoMonths&graphType=weeklyTotal&displayType=graph&trendLine=false';
