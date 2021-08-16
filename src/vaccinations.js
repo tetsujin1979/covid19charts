@@ -427,10 +427,10 @@ function processWeeklyVaccinations(inReplyToId) {
     let previousWeeksSingleDose = constants.valueAndString(singleDose.data[singleDose.data.length - 2]);
     let previousWeeksTotal = constants.valueAndString(weeklyData[weeklyData.length - 2].weeklyTotalDoses);
 
-    let firstDoseDifference = constants.difference(weeklyFirstDose.value, previousWeeksFirstDose.value);
-    let secondDoseDifference = constants.difference(weeklySecondDose.value, previousWeeksSecondDose.value);
-    let singleDoseDifference = constants.difference(weeklySingleDose.value, previousWeeksSingleDose.value);
-    let totalDifference = constants.difference(weeklyTotal.value, previousWeeksTotal.value);
+    let firstDoseDifference = constants.difference(weeklyFirstDose.value.toNumber(), previousWeeksFirstDose.value.toNumber());
+    let secondDoseDifference = constants.difference(weeklySecondDose.value.toNumber(), previousWeeksSecondDose.value.toNumber());
+    let singleDoseDifference = constants.difference(weeklySingleDose.value.toNumber(), previousWeeksSingleDose.value.toNumber());
+    let totalDifference = constants.difference(weeklyTotal.value.toNumber(), previousWeeksTotal.value.toNumber());
 
     const status = '💉 Vaccinations: Weekly dosage totals' +
                   `\n${moment(weeklyData[weeklyData.length - 1].date).format('ddd, Do MMM')}` + 
