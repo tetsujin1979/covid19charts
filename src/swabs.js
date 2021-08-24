@@ -171,7 +171,8 @@ function processSwabsByDay(lastTweetId) {
   }
   const status = `🧪 Swabs: By day\n${moment(graphData[graphData.length - 1].date).format('ddd, Do MMM')}` +
                  `\nPositive: ${dailyPositiveSwabs.string}(${dailyPercentagePositive}%)` +
-                 `\nNegative: ${dailyNegativeSwabs.string}{${100 - dailyPercentagePositive}%)` +
+                 `\nNegative: ${dailyNegativeSwabs.string}(${100 - dailyPercentagePositive}%)` +
+                 `\nTotal: ${Number(dailyTotalSwabs).toLocaleString('en')}` +
                  `\n\n${previousDay}` +
                  '\nResults(%)(Difference | % Diff)' +
                  `\nPositive: ${previousPositiveSwabs.string}(${previousPercentagePositive}%)${positiveDifference.toString}` +
@@ -263,7 +264,7 @@ function processWeeklyTotals(inReplyToId) {
       let lastWeekLowerPercentage = weeksWithLowerSevenDayAveragePercentage[weeksWithLowerSevenDayAveragePercentage.length - 1];
       logger.debug(`Found ${weeksWithLowerSevenDayAveragePercentage.length} weeks with lower positivity rate`);
       let weekDifference = moment(graphData[graphData.length - 1].date).diff(moment(lastWeekLowerPercentage.date), 'weeks');
-      logger.debug(`Lowest seven day average percentage in ${weekDifference} weeks - ${lastDayLowerPercentage.weeklyPercentagePositive}%`);
+      logger.debug(`Lowest seven day average percentage in ${weekDifference} weeks - ${lastWeekLowerPercentage.weeklyPercentagePositive}%`);
       if (weekDifference > 3) {
         records.push(`🔽 Lowest weekly positivity percentage - ${weeklyPercentagePositive}% - since ${moment(lastWeekLowerPercentage.date).format('dddd, Do MMMM YYYY')}(${lastWeekLowerPercentage.weeklyPercentagePositive}%)`);
       }
