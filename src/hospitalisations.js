@@ -190,13 +190,13 @@ function processHospitalisationsByDay(inReplyToId) {
   let previousWeeksICUChange = constants.difference(currentICU, previousWeeksICU);
 
   const status = '🏥 Hospitalisations: By day\nDate: Hospitalised(Diff | % diff)' +
-                 `\n${moment(graphData[graphData.length - 1].date).format('ddd, Do MMMM')}: ${currentHospitalisations}` + 
-                 `\n${moment(graphData[graphData.length - 8].date).format('ddd, Do MMMM')}: ${lastWeeksHospitalisations}${lastWeeksHospitalisationChange.toString}` +
-                 `\n${moment(graphData[graphData.length - 15].date).format('ddd, Do MMMM')}: ${previousWeeksHospitalisations}${previousWeeksHospitalisationChange.toString}` +
+                 `\n${moment(graphData[graphData.length - 1].date).format('ddd, Do MMM')}: ${currentHospitalisations}` + 
+                 `\n${moment(graphData[graphData.length - 8].date).format('ddd, Do MMM')}: ${lastWeeksHospitalisations}${lastWeeksHospitalisationChange.toString}` +
+                 `\n${moment(graphData[graphData.length - 15].date).format('ddd, Do MMM')}: ${previousWeeksHospitalisations}${previousWeeksHospitalisationChange.toString}` +
                  '\n\nDate: ICU(Diff | % diff)' +
-                 `\n${moment(graphData[graphData.length - 1].date).format('ddd, Do MMMM')}: ${currentICU}` + 
-                 `\n${moment(graphData[graphData.length - 8].date).format('ddd, Do MMMM')}: ${lastWeeksICU}${lastWeeksICUChange.toString}` +
-                 `\n${moment(graphData[graphData.length - 15].date).format('ddd, Do MMMM')}: ${previousWeeksICU}${previousWeeksICUChange.toString}`;
+                 `\n${moment(graphData[graphData.length - 1].date).format('ddd, Do MMM')}: ${currentICU}` + 
+                 `\n${moment(graphData[graphData.length - 8].date).format('ddd, Do MMM')}: ${lastWeeksICU}${lastWeeksICUChange.toString}` +
+                 `\n${moment(graphData[graphData.length - 15].date).format('ddd, Do MMM')}: ${previousWeeksICU}${previousWeeksICUChange.toString}`;
 
   // + '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=cases&dateSelection=lastTwoMonths&graphType=byWeekday&day=' + day + '&displayType=graph&trendLine=false';
   let tweet = constants.createTweet(status, '');
