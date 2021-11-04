@@ -427,22 +427,22 @@ function processWeeklyVaccinations(inReplyToId) {
     let previousWeeksSingleDose = constants.valueAndString(singleDose.data[singleDose.data.length - 2]);
     let previousWeeksTotal = constants.valueAndString(weeklyData[weeklyData.length - 2].weeklyTotalDoses);
 
-    let firstDoseDifference = constants.difference(weeklyFirstDose.value, previousWeeksFirstDose.value);
-    let secondDoseDifference = constants.difference(weeklySecondDose.value, previousWeeksSecondDose.value);
-    let singleDoseDifference = constants.difference(weeklySingleDose.value, previousWeeksSingleDose.value);
-    let totalDifference = constants.difference(weeklyTotal.value, previousWeeksTotal.value);
+    let firstDoseDifference = constants.difference(weeklyFirstDose.value.toNumber(), previousWeeksFirstDose.value.toNumber());
+    let secondDoseDifference = constants.difference(weeklySecondDose.value.toNumber(), previousWeeksSecondDose.value.toNumber());
+    let singleDoseDifference = constants.difference(weeklySingleDose.value.toNumber(), previousWeeksSingleDose.value.toNumber());
+    let totalDifference = constants.difference(weeklyTotal.value.toNumber(), previousWeeksTotal.value.toNumber());
 
-    const status = '💉 Vaccinations: Weekly dosage totals' +
+    const status = '💉 Vaccinations: Weekly totals' +
                   `\n${moment(weeklyData[weeklyData.length - 1].date).format('ddd, Do MMM')}` + 
                   `\n1st: ${weeklyFirstDose.string}` + 
                   `\n2nd: ${weeklySecondDose.string}` +
-                  (weeklySingleDose.value > 0 ? `\nSingle: ${weeklySingleDose.string}` : '') +
+                  `\nSingle: ${weeklySingleDose.string}` +
                   `\nTotal: ${weeklyTotal.string}` +  
                   '\n' +
                   `\n${moment(weeklyData[weeklyData.length - 2].date).format('ddd, Do MMM')}(Diff | % Diff)` + 
                   `\n1st: ${previousWeeksFirstDose.string}${firstDoseDifference.toString}` +
                   `\n2nd: ${previousWeeksSecondDose.string}${secondDoseDifference.toString}` +
-                  (previousWeeksSingleDose.value > 0 ? `\nSingle: ${previousWeeksSingleDose.string}${singleDoseDifference.toString}` : '') +
+                  `\nSingle: ${previousWeeksSingleDose.string}${singleDoseDifference.toString}` +
                   `\nTotal: ${previousWeeksTotal.string}${totalDifference.toString}`;
 
     const url = '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=vaccinations&dateSelection=lastTwoMonths&graphType=weeklyTotal&displayType=graph&trendLine=false';

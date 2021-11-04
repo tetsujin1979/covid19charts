@@ -51,28 +51,44 @@ function processData(covidData) {
     let percentagePositive = ((item.positiveSwabs * 100) / item.dailySwabs).toFixed(2);
     let swabData = {
       date: date,
+      dailySwabs: item.dailySwabs,
       positiveSwabs: item.positiveSwabs,
       negativeSwabs: (item.dailySwabs - item.positiveSwabs),
       percentagePositive: Number(percentagePositive)
     }
     if (index > 7) {
-      let today = covidData[index];
-      let yesterday = covidData[index - 1];
-      let twoDaysAgo = covidData[index - 2];
-      let threeDaysAgo = covidData[index - 3];
-      let fourDaysAgo = covidData[index - 4];
-      let fiveDaysAgo = covidData[index - 5];
-      let sixDayAgo = covidData[index - 6];
-      let totalPositiveSwabs = today.positiveSwabs + yesterday.positiveSwabs + twoDaysAgo.positiveSwabs + threeDaysAgo.positiveSwabs + fourDaysAgo.positiveSwabs + fiveDaysAgo.positiveSwabs + sixDayAgo.positiveSwabs;
+      let today = swabData;
+      let yesterday = graphData[graphData.length - 1];
+      let twoDaysAgo = graphData[graphData.length - 2];
+      let threeDaysAgo = graphData[graphData.length - 3];
+      let fourDaysAgo = graphData[graphData.length - 4];
+      let fiveDaysAgo = graphData[graphData.length - 5];
+      let sixDaysAgo = graphData[graphData.length - 6];
+      
+      let totalPositiveSwabs = today.positiveSwabs + 
+                               yesterday.positiveSwabs + 
+                               twoDaysAgo.positiveSwabs + 
+                               threeDaysAgo.positiveSwabs + 
+                               fourDaysAgo.positiveSwabs + 
+                               fiveDaysAgo.positiveSwabs + 
+                               sixDaysAgo.positiveSwabs;
+                               
       let totalNegativeSwabs = (today.dailySwabs - today.positiveSwabs) +
                                (yesterday.dailySwabs - yesterday.positiveSwabs) +
                                (twoDaysAgo.dailySwabs - twoDaysAgo.positiveSwabs) +
                                (threeDaysAgo.dailySwabs - threeDaysAgo.positiveSwabs) +
                                (fourDaysAgo.dailySwabs - fourDaysAgo.positiveSwabs) +
                                (fiveDaysAgo.dailySwabs - fiveDaysAgo.positiveSwabs) +
-                               (sixDayAgo.dailySwabs - sixDayAgo.positiveSwabs);
+                               (sixDaysAgo.dailySwabs - sixDaysAgo.positiveSwabs);
 
-      let sevenDayTotalSwabs = totalPositiveSwabs + totalNegativeSwabs;
+      let sevenDayTotalSwabs = today.dailySwabs + 
+                               yesterday.dailySwabs + 
+                               twoDaysAgo.dailySwabs + 
+                               threeDaysAgo.dailySwabs + 
+                               fourDaysAgo.dailySwabs + 
+                               fiveDaysAgo.dailySwabs + 
+                               sixDaysAgo.dailySwabs;
+
       swabData.sevenDayAveragePositiveSwabs = (totalPositiveSwabs / 7).toFixed(2);
       swabData.sevenDayAverageNegativeSwabs = (totalNegativeSwabs / 7).toFixed(2);
       swabData.sevenDayAveragePercentagePositive = ((totalPositiveSwabs * 100) / sevenDayTotalSwabs).toFixed(2);
@@ -171,7 +187,8 @@ function processSwabsByDay(lastTweetId) {
   }
   const status = `🧪 Swabs: By day\n${moment(graphData[graphData.length - 1].date).format('ddd, Do MMM')}` +
                  `\nPositive: ${dailyPositiveSwabs.string}(${dailyPercentagePositive}%)` +
-                 `\nNegative: ${dailyNegativeSwabs.string}{${100 - dailyPercentagePositive}%)` +
+                 `\nNegative: ${dailyNegativeSwabs.string}(${100 - dailyPercentagePositive}%)` +
+                 `\nTotal: ${Number(dailyTotalSwabs).toLocaleString('en')}` +
                  `\n\n${previousDay}` +
                  '\nResults(%)(Difference | % Diff)' +
                  `\nPositive: ${previousPositiveSwabs.string}(${previousPercentagePositive}%)${positiveDifference.toString}` +
@@ -263,7 +280,7 @@ function processWeeklyTotals(inReplyToId) {
       let lastWeekLowerPercentage = weeksWithLowerSevenDayAveragePercentage[weeksWithLowerSevenDayAveragePercentage.length - 1];
       logger.debug(`Found ${weeksWithLowerSevenDayAveragePercentage.length} weeks with lower positivity rate`);
       let weekDifference = moment(graphData[graphData.length - 1].date).diff(moment(lastWeekLowerPercentage.date), 'weeks');
-      logger.debug(`Lowest seven day average percentage in ${weekDifference} weeks - ${lastDayLowerPercentage.weeklyPercentagePositive}%`);
+      logger.debug(`Lowest seven day average percentage in ${weekDifference} weeks - ${lastWeekLowerPercentage.weeklyPercentagePositive}%`);
       if (weekDifference > 3) {
         records.push(`🔽 Lowest weekly positivity percentage - ${weeklyPercentagePositive}% - since ${moment(lastWeekLowerPercentage.date).format('dddd, Do MMMM YYYY')}(${lastWeekLowerPercentage.weeklyPercentagePositive}%)`);
       }
