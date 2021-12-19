@@ -297,7 +297,7 @@ function processWeeklyCases(inReplyToId) {
         
         const status = `🦠 Cases: Weekly total\nDate: Cases(Difference | % difference)` +
                     `\n${moment(weeklyData[weeklyData.length - 1].date).format('dddd, Do MMMM')}: ${newCases.string}` + 
-                    ((lastWeekLessCases.dateDifference > 3) ? `(Lowest number of cases in ${lastWeekLessCases.dateDifference} weeks - ${moment(lastWeekLessCases.date).format('dddd, Do MMMM')}: ${lastWeekMoreCases.weeklyCases.toLocaleString('en')})` : '') +
+                    ((lastWeekLessCases.dateDifference > 3) ? `(Lowest number of cases in ${lastWeekLessCases.dateDifference} weeks - ${moment(lastWeekLessCases.date).format('dddd, Do MMMM')}: ${lastWeekLessCases.weeklyCases.toLocaleString('en')})` : '') +
                     ((lastWeekMoreCases.dateDifference > 3) ? `(Highest number of cases in ${lastWeekMoreCases.dateDifference} weeks - ${moment(lastWeekMoreCases.date).format('dddd, Do MMMM')}: ${lastWeekMoreCases.weeklyCases.toLocaleString('en')})` : '') +
                     `\n${moment(weeklyData[weeklyData.length - 2].date).format('dddd, Do MMMM')}: ${previousDaysCases.string}${previousDaysCasesDifference.toString}` +
                     `\n${moment(weeklyData[weeklyData.length - 3].date).format('dddd, Do MMMM')}: ${previousWeeksCases.string}${previousWeeksCasesDifference.toString}`;
