@@ -36,6 +36,9 @@ const chartCallback = (ChartJS) => {
             if (e.text === 'Single Dose') {
               e.fillStyle = 'rgba(150, 81, 159, 0.6)';
             }
+            if (e.text === 'Booster') {
+              e.fillStyle = 'rgba(0, 168, 168, 0.6)';
+            }
           });        
         },
         afterDraw: function(chartInstance) {
