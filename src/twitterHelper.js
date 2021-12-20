@@ -72,8 +72,10 @@ function tweetStatus(tweet, callback, inReplyToId) {
 }
 
 function generateStatus(tweet) {
+  logger.debug(`Generating status from ${tweet}`);
   let retVal = '';
   if (tweet.status.length < MAX_TWEET_LENGTH) {
+    logger.debug(`Status less than max length`);
     retVal = tweet.status;
     if (retVal.length + URL_LENGTH < MAX_TWEET_LENGTH) {
       const statusLength = retVal.length + URL_LENGTH;
@@ -84,6 +86,8 @@ function generateStatus(tweet) {
     } else if (retVal.length + hashtag.length < MAX_TWEET_LENGTH) {
       retVal = retVal + "\n" + hashtag;    
     }
+  } else {
+    logger.debug(`Status greater than max length: ${tweet.status.length}\n${tweet.status}`);
   }
   return retVal;
 }
