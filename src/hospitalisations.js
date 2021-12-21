@@ -11,6 +11,8 @@ const days = constants.days();
 const directory = constants.directories().hospitalisations;
 const oneMonthAgo = constants.oneMonthAgo();
 
+const difference = constants.difference;
+
 const graphData = new Array();
 
 const dailyHospitalisations = {
@@ -30,6 +32,7 @@ const dailyICU = {
   borderWidth: 4,
   type: "line"
 };
+let header = '';
 
 function processData(covidData) {
   logger.info('Processing daily hospitalisations');
@@ -40,6 +43,11 @@ function processData(covidData) {
       date: date,
       hospitalisations: item.hospitalisations,
       icu: item.icu
+    }
+    if (index > 0) {
+      let yesterday = graphData[graphData.length - 1];
+      hospitalisationData.hospitalisationsDailyDifference = difference(item.hospitalisations, yesterday.hospitalisations);
+      hospitalisationData.icuDailyDifference = difference(item.icu, yesterday.icu);
     }
     if (index > 7) {
       let today = covidData[index];
@@ -56,7 +64,6 @@ function processData(covidData) {
     }
     graphData.push(hospitalisationData);
   });
-
   header = '📅 ' + moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM YYYY');
   processDailyHospitalisationData();
 }
@@ -84,7 +91,7 @@ function processDailyHospitalisationData() {
   logger.debug(`Found ${lessHospitalisations.length} days with fewer people in hospital`);
   logger.debug(`Found ${moreHospitalisations.length} days with more people in hospital`);
 
-  let lessICU = graphData.filter(item => item.icu <= currentICU);
+  let lessICU = graphData.filter(item => item.icu < currentICU);
   let moreICU = graphData.filter(item => item.icu > currentICU);
   logger.debug(`Found ${lessICU.length} days with fewer people in ICU`);
   logger.debug(`Found ${moreICU.length} days with more people in ICU`);
@@ -148,12 +155,12 @@ function processDailyHospitalisationData() {
   }
 
   const status = header +
-              `\n🏥 Hospitalisations\nCurrent: ${currentHospitalisations}` +
-              (lastDayLessHospitalisations.dateDifference > 14 ? `(Lowest since ${moment(lastDayLessHospitalisations.date).format('dddd, Do MMMM yyyy')} - ${lastDayLessHospitalisations.hospitalisations})`: '') +
-              (lastDayMoreHospitalisations.dateDifference > 14 ? `(Highest since ${moment(lastDayMoreHospitalisations.date).format('dddd, Do MMMM yyyy')} - ${lastDayMoreHospitalisations.hospitalisations})`: '') +
-              `\nICU: ${currentICU}` +
-              (lastDayLessICU.dateDifference > 14 ? `(Lowest since ${moment(lastDayLessICU.date).format('dddd, Do MMMM yyyy')} - ${lastDayLessICU.icu})`: '') +
-              (lastDayMoreICU.dateDifference > 14 ? `(Highest since ${moment(lastDayMoreICU.date).format('dddd, Do MMMM yyyy')} - ${lastDayMoreICU.icu})`: '');
+              `\n🏥 Hospitalisations\nCurrent: ${currentHospitalisations}(${graphData[graphData.length - 1].hospitalisationsDailyDifference.difference} | ${graphData[graphData.length - 1].hospitalisationsDailyDifference.percentage} compared to yesterday)` +
+              (lastDayLessHospitalisations.dateDifference > 14 ? `\nLowest since ${moment(lastDayLessHospitalisations.date).format('dddd, Do MMMM yyyy')} - ${lastDayLessHospitalisations.hospitalisations}`: '') +
+              (lastDayMoreHospitalisations.dateDifference > 14 ? `\nHighest since ${moment(lastDayMoreHospitalisations.date).format('dddd, Do MMMM yyyy')} - ${lastDayMoreHospitalisations.hospitalisations}`: '') +
+              `\nICU: ${currentICU}(${graphData[graphData.length - 1].icuDailyDifference.difference} | ${graphData[graphData.length - 1].icuDailyDifference.percentage} compared to yesterday)` +
+              (lastDayLessICU.dateDifference > 14 ? `\nLowest since ${moment(lastDayLessICU.date).format('dddd, Do MMMM yyyy')} - ${lastDayLessICU.icu}`: '') +
+              (lastDayMoreICU.dateDifference > 14 ? `\nHighest since ${moment(lastDayMoreICU.date).format('dddd, Do MMMM yyyy')} - ${lastDayMoreICU.icu}`: '');
 //               + '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=deaths&dateSelection=lastTwoMonths&graphType=normal&displayType=graph&trendLine=false';
 
   let tweet = constants.createTweet(status, '');
@@ -198,7 +205,6 @@ function processHospitalisationsByDay(inReplyToId) {
                  `\n${moment(graphData[graphData.length - 8].date).format('ddd, Do MMM')}: ${lastWeeksICU}${lastWeeksICUChange.toString}` +
                  `\n${moment(graphData[graphData.length - 15].date).format('ddd, Do MMM')}: ${previousWeeksICU}${previousWeeksICUChange.toString}`;
 
-  logger.debug(`status: ${status.length} characters\n${status}`);
   // + '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=cases&dateSelection=lastTwoMonths&graphType=byWeekday&day=' + day + '&displayType=graph&trendLine=false';
   let tweet = constants.createTweet(status, '');
   let configuration = generateConfiguration(labels, dailyHospitalisations, dailyICU, "Hospitalisations");
