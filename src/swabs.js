@@ -95,7 +95,8 @@ function processData(covidData) {
       if (date.getDay() === 0) {
         swabData.weeklyPositiveSwabs = totalPositiveSwabs;
         swabData.weeklyNegativeSwabs = totalNegativeSwabs;
-        swabData.weeklyPercentagePositive = ((totalPositiveSwabs * 100) / (totalPositiveSwabs + totalNegativeSwabs));
+        swabData.weeklyPercentagePositive = ((totalPositiveSwabs * 100) / (sevenDayTotalSwabs));
+        swabData.weeklyTotalSwabs = sevenDayTotalSwabs;
       }
     }
     graphData.push(swabData);
@@ -127,9 +128,61 @@ function processNewSwabs() {
     let lastDayLowerPercentage = daysWithLowerDailyPercentage[daysWithLowerDailyPercentage.length - 1];
     let dateDifference = moment(graphData[graphData.length - 1].date).diff(moment(lastDayLowerPercentage.date), 'days');
     logger.debug(`Lowest daily percentage in ${dateDifference} days - ${lastDayLowerPercentage.percentagePositive}%`);
-    if (dateDifference > 21) {
+    if (dateDifference > 14) {
       records.push(`🔽 Lowest daily positivity percentage since ${moment(lastDayLowerPercentage.date).format('dddd, Do MMMM YYYY')}(${lastDayLowerPercentage.percentagePositive}%)`);
     }
+  } else {
+    records.push(`🔽 Lowest daily positivity percentage ever!`);
+  }
+  
+  let daysWithHigherDailyPercentage = graphData.slice().filter(item => item.percentagePositive > dailyPercentagePositive);
+  logger.debug(`Found ${daysWithHigherDailyPercentage.length} days with higher daily positivity percentage ${dailyPercentagePositive}%`);
+  if (daysWithHigherDailyPercentage.length > 0) {
+    let lastDayHigherPercentage = daysWithHigherDailyPercentage[daysWithHigherDailyPercentage.length - 1];
+    let dateDifference = moment(graphData[graphData.length - 1].date).diff(moment(lastDayHigherPercentage.date), 'days');
+    logger.debug(`Highest daily percentage in ${dateDifference} days - ${lastDayHigherPercentage.percentagePositive}%`);
+    if (dateDifference > 14) {
+      records.push(`🔼 Highest daily positivity percentage since ${moment(lastDayHigherPercentage.date).format('dddd, Do MMMM YYYY')}(${lastDayHigherPercentage.percentagePositive}%)`);
+    }
+  } else {
+    records.push(`🔼 New record for highest daily positivity`);
+  }
+  
+  let daysWithLowerPositiveSwabs = graphData.slice().filter(item => item.positiveSwabs < dailyPositiveSwabs);
+  logger.debug(`Found ${daysWithLowerPositiveSwabs.length} days with lower positive swabs`);
+  if (daysWithLowerPositiveSwabs.length > 0) {
+    let lastDayLowerPositiveSwabs = daysWithLowerPositiveSwabs[daysWithLowerPositiveSwabs.length - 1];
+    let dateDifference = moment(graphData[graphData.length - 1].date).diff(moment(lastDayLowerPositiveSwabs.date), 'days');
+    logger.debug(`Lowest daily positive swabs in ${dateDifference} days`);
+    if (dateDifference > 14) {
+      records.push(`🔽 Lowest daily positive swabs since ${moment(lastDayLowerPositiveSwabs.date).format('dddd, Do MMMM YYYY')}`);
+    }
+  } 
+
+  let daysWithHigherPositiveSwabs = graphData.slice().filter(item => item.positiveSwabs > dailyPositiveSwabs);
+  logger.debug(`Found ${daysWithHigherDailyPercentage.length} days with higher daily positivity percentage ${dailyPercentagePositive}%`);
+  if (daysWithHigherPositiveSwabs.length > 0) {
+    let lastDayHigherPositiveSwabs = daysWithHigherPositiveSwabs[daysWithHigherPositiveSwabs.length - 1];
+    let dateDifference = moment(graphData[graphData.length - 1].date).diff(moment(daysWithHigherPositiveSwabs.date), 'days');
+    logger.debug(`Highest daily positive swabs in ${dateDifference} days`);
+    if (dateDifference > 14) {
+      records.push(`🔼 Highest number of daily positive swabs since ${moment(daysWithHigherPositiveSwabs.date).format('dddd, Do MMMM YYYY')}(${daysWithHigherPositiveSwabs.positiveSwabs}%)`);
+    }
+  } else {
+      records.push(`🔼 New record high of daily positive swabs`);
+  }
+
+  let daysWithHigherTotalSwabs = graphData.slice().filter(item => item.dailySwabs > dailyTotalSwabs);
+  logger.debug(`Found ${daysWithHigherTotalSwabs.length} days with higher total swabs`);
+  if (daysWithHigherTotalSwabs.length > 0) {
+    let lastDayHigherTotalSwabs = daysWithHigherTotalSwabs[daysWithHigherTotalSwabs.length - 1];
+    let dateDifference = moment(graphData[graphData.length - 1].date).diff(moment(daysWithHigherTotalSwabs.date), 'days');
+    logger.debug(`Highest daily swabs in ${dateDifference} days`);
+    if (dateDifference > 14) {
+      records.push(`🔼 Highest number of total swabs since ${moment(lastDayHigherTotalSwabs.date).format('dddd, Do MMMM YYYY')}(${lastDayHigherTotalSwabs.dailySwabs}%)`);
+    }
+  } else {
+      records.push(`🔼 New record high of swabs tested`);
   }
 
   const status = `🧪 Swabs: Daily results\n${moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM YYYY')}` +
@@ -232,13 +285,27 @@ function processRollingSevenDayAverage(inReplyToId) {
   let daysWithLowerSevenDayAveragePercentage = graphData.slice().filter(item => item.sevenDayAveragePercentagePositive < dailyPercentagePositive);
   if (daysWithLowerSevenDayAveragePercentage.length > 0) {
     let lastDayLowerPercentage = daysWithLowerSevenDayAveragePercentage[daysWithLowerSevenDayAveragePercentage.length - 1];
-    logger.debug(`Found ${daysWithLowerSevenDayAveragePercentage.length} days with lower seven data average`);
+    logger.debug(`Found ${daysWithLowerSevenDayAveragePercentage.length} days with lower seven day average`);
     let dateDifference = moment(graphData[graphData.length - 1].date).diff(moment(lastDayLowerPercentage.date), 'days');
     logger.debug(`Lowest seven day average percentage in ${dateDifference} days - ${lastDayLowerPercentage.sevenDayAveragePercentagePositive}%`);
-    if (dateDifference > 21) {
+    if (dateDifference > 14) {
       records.push(`🔽 Lowest seven day average positivity percentage - ${dailyPercentagePositive}% - since ${moment(lastDayLowerPercentage.date).format('dddd, Do MMMM YYYY')}(${lastDayLowerPercentage.sevenDayAveragePercentagePositive}%)`);
     }
   }
+
+  let daysWithHigherSevenDayAveragePercentage = graphData.slice().filter(item => item.sevenDayAveragePercentagePositive > dailyPercentagePositive);
+  if (daysWithHigherSevenDayAveragePercentage.length > 0) {
+    let lastDayHigherPercentage = daysWithHigherSevenDayAveragePercentage[daysWithHigherSevenDayAveragePercentage.length - 1];
+    logger.debug(`Found ${daysWithHigherSevenDayAveragePercentage.length} days with higher seven day average`);
+    let dateDifference = moment(graphData[graphData.length - 1].date).diff(moment(lastDayHigherPercentage.date), 'days');
+    logger.debug(`Highest seven day average percentage in ${dateDifference} days - ${lastDayHigherPercentage.sevenDayAveragePercentagePositive}%`);
+    if (dateDifference > 14) {
+      records.push(`🔼 Highest seven day average positivity percentage - ${dailyPercentagePositive}% - since ${moment(lastDayHigherPercentage.date).format('dddd, Do MMMM YYYY')}(${lastDayHigherPercentage.sevenDayAveragePercentagePositive}%)`);
+    }
+  } else {
+      records.push(`🔼 New record high seven day average positivity percentage`);
+  }
+
   const status = `🧪 Swabs: Seven day average\n${moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM')}` +
                  `\nPositive tests: ${dailyPositiveSwabs.toLocaleString('en')}(${dailyPercentagePositive}%)` +
                  `\nNegative tests: ${dailyNegativeSwabs.toLocaleString('en')}(${(100 - dailyPercentagePositive)}%)` +
@@ -281,9 +348,35 @@ function processWeeklyTotals(inReplyToId) {
       logger.debug(`Found ${weeksWithLowerSevenDayAveragePercentage.length} weeks with lower positivity rate`);
       let weekDifference = moment(graphData[graphData.length - 1].date).diff(moment(lastWeekLowerPercentage.date), 'weeks');
       logger.debug(`Lowest seven day average percentage in ${weekDifference} weeks - ${lastWeekLowerPercentage.weeklyPercentagePositive}%`);
-      if (weekDifference > 3) {
+      if (weekDifference > 2) {
         records.push(`🔽 Lowest weekly positivity percentage - ${weeklyPercentagePositive}% - since ${moment(lastWeekLowerPercentage.date).format('dddd, Do MMMM YYYY')}(${lastWeekLowerPercentage.weeklyPercentagePositive}%)`);
       }
+    }
+
+    let weeksWithHigherSevenDayAveragePercentage = graphData.slice().filter(item => item.date.getDay() === 0 && item.weeklyPercentagePositive > weeklyPercentagePositive);
+    if (weeksWithHigherSevenDayAveragePercentage.length > 0) {
+      let lastWeekHigherPercentage = weeksWithHigherSevenDayAveragePercentage[weeksWithHigherSevenDayAveragePercentage.length - 1];
+      logger.debug(`Found ${weeksWithHigherSevenDayAveragePercentage.length} weeks with higher positivity rate`);
+      let weekDifference = moment(graphData[graphData.length - 1].date).diff(moment(lastWeekHigherPercentage.date), 'weeks');
+      logger.debug(`Highest seven day average percentage in ${weekDifference} weeks - ${lastWeekHigherPercentage.weeklyPercentagePositive}%`);
+      if (weekDifference > 2) {
+        records.push(`🔼 Highest weekly positivity percentage - ${weeklyPercentagePositive}% - since ${moment(lastWeekHigherPercentage.date).format('dddd, Do MMMM YYYY')}(${lastWeekHigherPercentage.weeklyPercentagePositive}%)`);
+      }
+    } else {
+      records.push(`🔼 New record highest weekly positivity percentage rate`);
+    }
+
+    let weeksWithHigherTotalSwabs = graphData.slice().filter(item => item.date.getDay() === 0 && item.weeklyTotalSwabs > weeklyTotalSwabs);
+    if (weeksWithHigherTotalSwabs.length > 0) {
+      let lastWeekHigherTotalSwabs = weeksWithHigherTotalSwabs[weeksWithHigherTotalSwabs.length - 1];
+      logger.debug(`Found ${weeksWithHigherTotalSwabs.length} weeks with higher positivity rate`);
+      let weekDifference = moment(graphData[graphData.length - 1].date).diff(moment(weeksWithHigherTotalSwabs.date), 'weeks');
+      logger.debug(`Highest total swabs in ${weekDifference} weeks - ${weeksWithHigherTotalSwabs.weeklyTotalSwabs}`);
+      if (weekDifference > 2) {
+        records.push(`🔼 Highest weekly total swabs since ${moment(lastWeekHigherTotalSwabs.date).format('dddd, Do MMMM YYYY')}(${lastWeekHigherTotalSwabs.weeklyTotalSwabs})`);
+      }
+    } else {
+      records.push(`🔼 New record highest weekly swabs tested`);
     }
 
     const status = `🧪 Swabs: Weekly total\n${moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM')}` +
