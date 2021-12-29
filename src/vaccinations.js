@@ -22,6 +22,8 @@ const over12 = 4189292;
 let dailyFirstDoseRecord = false;
 let dailySecondDoseRecord = false;
 let dailySingleDoseRecord = false;
+let dailyBoosterRecord = false;
+let dailyImmunocompromisedRecord = false;
 let dailyTotalDosesRecord = false;
 
 const firstDose = {
@@ -64,8 +66,19 @@ const booster = {
   order: 2
 };
 
+const immunocompromised = {
+  label: "Immunocompromised",
+  property: 'immunocompromised',
+  data: [],
+  backgroundColor: "rgba(217, 211, 19, 0.6)",
+  borderColor: "rgba(217, 211, 19, 0.6)",
+  borderWidth: 0,
+  yAxisID: "DosesAxis",
+  order: 2
+};
+
 const over12TotalFirstDoses = {
-  label: "Over 16s - 1st Dose",
+  label: "Over 12s - 1st Dose",
   data: [],
   backgroundColor: "transparent",
   borderColor: "red",
@@ -76,7 +89,7 @@ const over12TotalFirstDoses = {
 };
 
 const over12TotalSecondDoses = {
-  label: "Over 16s - 2nd Dose",
+  label: "Over 12s - 2nd Dose",
   data: [],
   backgroundColor: "transparent",
   borderColor: "green",
@@ -87,7 +100,7 @@ const over12TotalSecondDoses = {
 };
 
 const over12TotalSingleDoses = {
-  label: "Over 16s - Single Dose",
+  label: "Over 12s - Single Dose",
   data: [],
   backgroundColor: "transparent",
   borderColor: "orange",
@@ -98,7 +111,18 @@ const over12TotalSingleDoses = {
 };
 
 const over12TotalBooster = {
-  label: "Over 16s - Booster",
+  label: "Over 12s - Booster",
+  data: [],
+  backgroundColor: "transparent",
+  borderColor: "cyan",
+  borderWidth: 4,
+  yAxisID: "VaccinatedAxis",
+  type: "line",
+  order: 1
+};
+
+const over12TotalImmunocompromised = {
+  label: "Over 12s - Booster",
   data: [],
   backgroundColor: "transparent",
   borderColor: "yellow",
@@ -115,14 +139,19 @@ function processData(covidData) {
   let totalSecondDose = null;
   let totalSingleDose = null;
   let totalBooster = null;
-  covidData.filter(item => (item.hasOwnProperty("dateString") && item.hasOwnProperty("firstDose")))
-           .forEach(function(item, index) {
+  let totalImmunocompromised = new Decimal(0);
+  let over12FirstDosePercent = null;
+  let over12SecondDosePercent = null;
+  let over12SingleDosePercent = null;
+  let over12BoosterPercent = new Decimal(0);
+  let over12ImmunocompromisedPercent = new Decimal(0);
+  covidData.filter(item => (item.hasOwnProperty("firstDose") || item.hasOwnProperty("immunocompromised")))
+           .forEach((item, index) => {
     let date = new Date(item.dateString);
-    totalFirstDose = (totalFirstDose == null) ? new Decimal(item.firstDose) : (totalFirstDose.plus(new Decimal(item.firstDose)));
-    let over12FirstDosePercent = totalFirstDose.times(100).dividedBy(over12);
-    let over12SecondDosePercent = null;
-    let over12SingleDosePercent = null;
-    let over12BoosterPercent = null;
+    if (item.hasOwnProperty("firstDose")) {
+      totalFirstDose = (totalFirstDose == null) ? new Decimal(item.firstDose) : (totalFirstDose.plus(new Decimal(item.firstDose)));
+      over12FirstDosePercent = totalFirstDose.times(100).dividedBy(over12);
+    }
     if (item.hasOwnProperty("secondDose")) {
       totalSecondDose =  (totalSecondDose == null) ? new Decimal(item.secondDose) : (totalSecondDose.plus(new Decimal(item.secondDose)));
       over12SecondDosePercent = totalSecondDose.times(100).dividedBy(over12);
@@ -135,22 +164,33 @@ function processData(covidData) {
       totalBooster = (totalBooster == null) ? new Decimal(item.booster) : (totalBooster.plus(new Decimal(item.booster)));
       over12BoosterPercent = totalBooster.times(100).dividedBy(over12);
     }
-    let totalDailyDoses = Decimal.sum(item.firstDose, (item.hasOwnProperty("secondDose") ? item.secondDose : 0), (item.hasOwnProperty("singleDose") ? item.singleDose : 0), (item.hasOwnProperty("booster") ? item.booster : 0));
+    if (item.hasOwnProperty("immunocompromised")) {
+      totalImmunocompromised = (totalImmunocompromised == null) ? new Decimal(item.totalImmunocompromised) : (totalImmunocompromised.plus(new Decimal(item.immunocompromised)));
+      over12ImmunocompromisedPercent = totalImmunocompromised.times(100).dividedBy(over12);
+    }
+    let totalDailyDoses = Decimal.sum((item.hasOwnProperty("firstDose") ? item.firstDose : 0), 
+                                      (item.hasOwnProperty("secondDose") ? item.secondDose : 0), 
+                                      (item.hasOwnProperty("singleDose") ? item.singleDose : 0), 
+                                      (item.hasOwnProperty("booster") ? item.booster : 0), 
+                                      (item.hasOwnProperty("immunocompromised") ? item.immunocompromised : 0));
     let vaccinatedData = {
       date: date,
-      firstDose: new Decimal(item.firstDose),
+      firstDose: new Decimal(item.hasOwnProperty("firstDose") ? item.firstDose : 0),
       secondDose: new Decimal(item.hasOwnProperty("secondDose") ? item.secondDose : 0),
       singleDose: new Decimal(item.hasOwnProperty("singleDose") ? item.singleDose : 0),
       booster: new Decimal(item.hasOwnProperty("booster") ? item.booster : 0),
+      immunocompromised: new Decimal(item.hasOwnProperty("immunocompromised") ? item.immunocompromised : 0),
       totalDailyDoses: totalDailyDoses,
       totalFirstDose: totalFirstDose,
       totalSecondDose: totalSecondDose,
       totalSingleDose: totalSingleDose,
       totalBooster: totalBooster,
+      totalImmunocompromised: totalImmunocompromised,
       over12TotalFirstDoses: over12FirstDosePercent,
       over12TotalSecondDoses: over12SecondDosePercent,
       over12TotalSingleDoses: over12SingleDosePercent,
-      over12Booster: over12BoosterPercent
+      over12Booster: over12BoosterPercent,
+      over12Immunocompromised: over12ImmunocompromisedPercent
     };
     if (index > 7 && graphData.length > 7) {
       let today = graphData[graphData.length - 1];
@@ -164,18 +204,20 @@ function processData(covidData) {
       let sevenDayTotalSecondDoses = Decimal.sum(today.secondDose, yesterday.secondDose, twoDaysAgo.secondDose, threeDaysAgo.secondDose, fourDaysAgo.secondDose, fiveDaysAgo.secondDose, sixDayAgo.secondDose);
       let sevenDayTotalSingleDoses = Decimal.sum(testUndefined(today.singleDose), testUndefined(yesterday.singleDose), testUndefined(twoDaysAgo.singleDose), testUndefined(threeDaysAgo.singleDose), testUndefined(fourDaysAgo.singleDose), testUndefined(fiveDaysAgo.singleDose), testUndefined(sixDayAgo.singleDose));
       let sevenDayTotalBooster = Decimal.sum(testUndefined(today.booster), testUndefined(yesterday.booster), testUndefined(twoDaysAgo.booster), testUndefined(threeDaysAgo.booster), testUndefined(fourDaysAgo.booster), testUndefined(fiveDaysAgo.booster), testUndefined(sixDayAgo.booster));
+      let sevenDayTotalImmunocompromised = Decimal.sum(testUndefined(today.immunocompromised), testUndefined(yesterday.immunocompromised), testUndefined(twoDaysAgo.immunocompromised), testUndefined(threeDaysAgo.immunocompromised), testUndefined(fourDaysAgo.immunocompromised), testUndefined(fiveDaysAgo.immunocompromised), testUndefined(sixDayAgo.immunocompromised));
       vaccinatedData.sevenDayAverageFirstDose = sevenDayTotalFirstDoses.dividedBy(7);
       vaccinatedData.sevenDayAverageSecondDose = sevenDayTotalSecondDoses.dividedBy(7);
       vaccinatedData.sevenDayAverageSingleDose = sevenDayTotalSingleDoses.dividedBy(7);
       vaccinatedData.sevenDayAverageBooster = sevenDayTotalBooster.dividedBy(7);
+      vaccinatedData.sevenDayAverageImmunocompromised = sevenDayTotalImmunocompromised.dividedBy(7);
       if (date.getDay() === 0) {
         vaccinatedData.weeklyFirstDoses = sevenDayTotalFirstDoses;
         vaccinatedData.weeklySecondDoses = sevenDayTotalSecondDoses;
         vaccinatedData.weeklySingleDoses = sevenDayTotalSingleDoses;
         vaccinatedData.weeklyBooster = sevenDayTotalBooster;
-        vaccinatedData.weeklyTotalDoses = Decimal.sum(sevenDayTotalFirstDoses, sevenDayTotalSecondDoses, sevenDayTotalSingleDoses, sevenDayTotalBooster);
+        vaccinatedData.weeklyImmunocompromised = sevenDayTotalImmunocompromised;
+        vaccinatedData.weeklyTotalDoses = Decimal.sum(sevenDayTotalFirstDoses, sevenDayTotalSecondDoses, sevenDayTotalSingleDoses, sevenDayTotalBooster, sevenDayTotalImmunocompromised);
       }
-
     }
     graphData.push(vaccinatedData);
   });
@@ -193,16 +235,19 @@ function processNewVaccinations() {
     secondDose.data.push(value.secondDose);
     singleDose.data.push(value.singleDose);
     booster.data.push(value.booster);
+    immunocompromised.data.push(value.immunocompromised);
     over12TotalFirstDoses.data.push(value.totalFirstDose);
     over12TotalSecondDoses.data.push(value.totalSecondDose);
     over12TotalSingleDoses.data.push(value.totalSingleDose);
     over12TotalBooster.data.push(value.totalBooster);
+    over12TotalImmunocompromised.data.push(value.totalImmunocompromised);
   });
   let finalEntry = graphData[graphData.length - 1];
   let dailyFirstDose = firstDose.data[firstDose.data.length - 1].toNumber().toLocaleString('en');
   let dailySecondDose = secondDose.data[secondDose.data.length - 1].toNumber().toLocaleString('en');
   let dailySingleDose = singleDose.data[singleDose.data.length - 1].toNumber().toLocaleString('en');
   let dailyBooster = booster.data[booster.data.length - 1].toNumber().toLocaleString('en');
+  let dailyImmunocompromised = immunocompromised.data[immunocompromised.data.length - 1].toNumber().toLocaleString('en');
   let dailyTotalDoses = finalEntry.totalDailyDoses.toNumber().toLocaleString('en');
 
   let orderedByFirstDose = graphData.slice().sort(function(a, b) { return (b.firstDose.minus(a.firstDose).toNumber()); });
@@ -230,6 +275,22 @@ function processNewVaccinations() {
     records.push(`🥇 Record Single Doses - ${dailySingleDose} - Previous high: ${previousHighDate}(${previousHighSingleDoses})`);
   }
 
+  let orderedByBooster = graphData.slice().sort(function(a, b) { return (b.booster.minus(a.booster).toNumber()); });
+  if (orderedByBooster[0].booster.equals(finalEntry.booster)) {
+    dailyBooster = true;
+    let previousHighDate = moment(orderedByBooster[1].date).format('dddd, Do MMMM');
+    let previousHighBooster = orderedByBooster[1].booster.toNumber().toLocaleString('en');
+    records.push(`🥇 Record Booster - ${dailyBooster} - Previous high: ${previousHighDate}(${previousHighBooster})`);
+  }
+
+  let orderedByImmunocompromised = graphData.slice().sort(function(a, b) { return (b.immunocompromised.minus(a.immunocompromised).toNumber()); });
+  if (orderedByImmunocompromised[0].immunocompromised.equals(finalEntry.immunocompromised)) {
+    dailyImmunocompromisedRecord = true;
+    let previousHighDate = moment(orderedByImmunocompromised[1].date).format('dddd, Do MMMM');
+    let previousHighImmunocompromised = orderedByImmunocompromised[1].immunocompromised.toNumber().toLocaleString('en');
+    records.push(`🥇 Record Booster - ${dailyImmunocompromised} - Previous high: ${previousHighDate}(${previousHighImmunocompromised})`);
+  }
+
   let orderedByTotalDose = graphData.slice().sort(function(a, b) { return (b.totalDailyDoses.minus(a.totalDailyDoses).toNumber()); });
   if (orderedByTotalDose[0].totalDailyDoses.equals(finalEntry.totalDailyDoses)) {
     dailyTotalDosesRecord = true;
@@ -241,31 +302,35 @@ function processNewVaccinations() {
   let totalFirstDose = finalEntry.totalFirstDose.toNumber();
   let totalSecondDose = finalEntry.totalSecondDose.toNumber();
   let totalSingleDose = finalEntry.totalSingleDose.toNumber();
-  let totalDoses = Decimal.sum(finalEntry.totalFirstDose, finalEntry.totalSecondDose, finalEntry.totalSingleDose).toNumber();
+  let totalBooster = finalEntry.totalBooster.toNumber();
+  let totalImmunocompromised = finalEntry.totalImmunocompromised.toNumber();
+  let totalDoses = Decimal.sum(finalEntry.totalFirstDose, finalEntry.totalSecondDose, finalEntry.totalSingleDose, finalEntry.totalBooster, finalEntry.totalImmunocompromised).toNumber();
+
   let atLeastOneDose = Decimal.sum(finalEntry.totalFirstDose, finalEntry.totalSingleDose).toNumber();
   let atLeastOneDosePercentage = ((atLeastOneDose * 100) / over12);
   let totalVaccinated = finalEntry.totalSecondDose.plus(finalEntry.totalSingleDose).toNumber();
   let totalVaccinatedPercentage = finalEntry.over12TotalSecondDoses.plus(finalEntry.over12TotalSingleDoses);
-  let totalBooster = finalEntry.totalBooster.toNumber();
-  let totalBoosterPercentage = finalEntry.over12Booster;
+  let totalBoosted = finalEntry.totalBooster.plus(finalEntry.totalImmunocompromised).toNumber();
+  let totalBoostedPercentage = finalEntry.over12Booster.plus(finalEntry.over12Immunocompromised).toNumber();
   let status = '💉 Vaccines' +
             `\n${moment(finalEntry.date).format('ddd, Do MMM')}` + 
             `\n1st: ${dailyFirstDose}` +
             `\n2nd: ${dailySecondDose}` +
             `\nSingle: ${dailySingleDose}` +
             `\nBooster: ${dailyBooster}` +
+            `\nImmunocompromised: ${dailyImmunocompromised}` +
             `\nTotal: ${dailyTotalDoses}` +
             '\n' +
             `\nAt least one dose: ${(totalFirstDose + totalSingleDose).toLocaleString('en')}(${atLeastOneDosePercentage.toFixed(1)}% of 12+)` +
             `\nFully vaccinated: ${totalVaccinated.toLocaleString('en')}(${totalVaccinatedPercentage.toFixed(1)}% of 12+)` +
-            `\nBooster: ${totalBooster.toLocaleString('en')}(${totalBoosterPercentage.toFixed(1)}% of 12+)`;
+            `\nBoosted: ${totalBoosted.toLocaleString('en')}(${totalBoostedPercentage.toFixed(1)}% of 12+)`;
 
   let url = 'https://tetsujin1979.github.io/covid19dashboard?dataSelection=vaccinations&dateSelection=lastTwoMonths&graphType=normal&displayType=graph&trendLine=false';
   let tweet = constants.createTweet(status, url);
   let b64Content = new Array();
-  let configuration = generateConfiguration(labels, firstDose, secondDose, singleDose, booster, over12TotalFirstDoses, over12TotalSecondDoses, over12TotalSingleDoses, over12TotalBooster, "Daily Vaccinations")
+  let configuration = generateConfiguration(labels, firstDose, secondDose, singleDose, booster, immunocompromised, over12TotalFirstDoses, over12TotalSecondDoses, over12TotalSingleDoses, over12TotalBooster, over12TotalImmunocompromised, "Daily Vaccinations")
   b64Content.push(chartHelper.writeChart(directory + '/dailyVaccinations.png', configuration));
-  configuration = generateDoughnutConfiguration(labels, finalEntry.over12TotalFirstDoses, finalEntry.over12TotalSecondDoses, finalEntry.over12TotalSingleDoses, finalEntry.over12Booster);
+  configuration = generateDoughnutConfiguration(labels, finalEntry.over12TotalFirstDoses, finalEntry.over12TotalSecondDoses, finalEntry.over12TotalSingleDoses, finalEntry.over12Booster, finalEntry.over12Immunocompromised);
   b64Content.push(chartHelper.writeChart(directory + '/vaccinationProgress.png', configuration));
   twitterHelper.tweetChart(b64Content, tweet, processRollingSevenDayAverage);
 }
@@ -282,23 +347,28 @@ function processVaccinationsByDay(lastTweetId) {
     secondDose.data.push(value.secondDose);
     singleDose.data.push(value.singleDose);
     booster.data.push(value.booster);
+    immunocompromised.data.push(value.immunocompromised);
     over12TotalFirstDoses.data.push(value.totalFirstDose);
     over12TotalSecondDoses.data.push(value.totalSecondDose);
     over12TotalSingleDoses.data.push(value.totalSingleDose);
     over12TotalBooster.data.push(value.totalBooster);
+    over12TotalImmunocompromised.data.push(value.totalImmunocompromised);
   });
+
   let finalEntry = graphData[graphData.length - 1];
   let previousDay = moment(graphData[graphData.length - 8].date).format('ddd, Do MMMM');
   let dailyFirstDose = constants.valueAndString(firstDose.data[firstDose.data.length - 1].toNumber());
   let dailySecondDose = constants.valueAndString(secondDose.data[secondDose.data.length - 1].toNumber());
   let dailySingleDose = constants.valueAndString(singleDose.data[singleDose.data.length - 1].toNumber());
   let dailyBooster = constants.valueAndString(booster.data[booster.data.length - 1].toNumber());
+  let dailyImmunocompromised = constants.valueAndString(immunocompromised.data[immunocompromised.data.length - 1].toNumber());
 
   let previousFirstDose = constants.valueAndString(firstDose.data[firstDose.data.length - 2].toNumber());
   let previousSecondDose = constants.valueAndString(secondDose.data[secondDose.data.length - 2].toNumber());
   let previousSingleDose = constants.valueAndString(singleDose.data[singleDose.data.length - 2].toNumber());
-  let previousBooster = constants.valueAndString(booster.data[singleDose.data.length - 2].toNumber());
-  let previousTotalDailyDoses = constants.valueAndString(Decimal.sum(previousFirstDose.value, previousSecondDose.value, previousSingleDose.value, previousBooster.value));
+  let previousBooster = constants.valueAndString(booster.data[booster.data.length - 2].toNumber());
+  let previousImmunocompromised = constants.valueAndString(immunocompromised.data[immunocompromised.data.length - 2].toNumber());
+  let previousTotalDailyDoses = constants.valueAndString(Decimal.sum(previousFirstDose.value, previousSecondDose.value, previousSingleDose.value, previousBooster.value, previousImmunocompromised.value));
 
   let totalFirstDose = constants.valueAndString(graphData[graphData.length - 1].totalFirstDose);
   let totalSecondDose = constants.valueAndString(graphData[graphData.length - 1].totalSecondDose);
@@ -308,6 +378,7 @@ function processVaccinationsByDay(lastTweetId) {
   let secondDoseChange = constants.difference(dailySecondDose.value, previousSecondDose.value);
   let singleDoseChange = constants.difference(dailySingleDose.value, previousSingleDose.value);
   let boosterChange = constants.difference(dailyBooster.value, previousBooster.value);
+  let immunocompromisedChange = constants.difference(dailyImmunocompromised.value, previousImmunocompromised.value);
   let totalDosesChange = constants.difference(totalDailyDoses.value, previousTotalDailyDoses.value);
 
   let orderedByFirstDose = graphData.filter(item => item.date.getDay() == day)
@@ -330,6 +401,36 @@ function processVaccinationsByDay(lastTweetId) {
     records.push(`🥇 Record Second Doses adminstered on a ${days[day]}(${dailySecondDose.string}) - Previous high: ${previousHighDate}(${previousHighSecondDoses})`);
   }
 
+  let orderedBySingleDose = graphData.filter(item => item.date.getDay() == day)
+                                     .slice()
+                                     .sort(function(a, b) { return (b.singleDose - a.singleDose); });
+
+  if (!dailySingleDoseRecord && orderedBySingleDose[0].singleDose === finalEntry.singleDose) {
+    let previousHighDate = moment(orderedBySingleDose[1].date).format('dddd, Do MMMM');
+    let previousHighSingleDoses = Number(orderedBySingleDose[1].single).toLocaleString('en');
+    records.push(`🥇 Record Single Doses adminstered on a ${days[day]}(${dailySingleDose.string}) - Previous high: ${previousHighDate}(${previousHighSingleDoses})`);
+  }
+
+  let orderedByBooster = graphData.filter(item => item.date.getDay() == day)
+                                  .slice()
+                                  .sort(function(a, b) { return (b.booster - a.booster); });
+
+  if (!dailyBoosterRecord && orderedByBooster[0].booster === finalEntry.booster) {
+    let previousHighDate = moment(orderedByBooster[1].date).format('dddd, Do MMMM');
+    let previousHighBooster = Number(orderedByBooster[1].single).toLocaleString('en');
+    records.push(`🥇 Record Booster Doses adminstered on a ${days[day]}(${dailyBooster.string}) - Previous high: ${previousHighDate}(${previousHighBooster})`);
+  }
+
+  let orderedByImmunocompromised = graphData.filter(item => item.date.getDay() == day)
+                                            .slice()
+                                            .sort(function(a, b) { return (b.immunocompromised - a.immunocompromised); });
+
+  if (!dailyImmunocompromisedRecord && orderedByImmunocompromised[0].immunocompromised === finalEntry.immunocompromised) {
+    let previousHighDate = moment(orderedByImmunocompromised[1].date).format('dddd, Do MMMM');
+    let previousHighImmunocompromised = Number(orderedByImmunocompromised[1].single).toLocaleString('en');
+    records.push(`🥇 Record Immunocompromised doses adminstered on a ${days[day]}(${dailyImmunocompromised.string}) - Previous high: ${previousHighDate}(${previousHighImmunocompromised})`);
+  }
+
   let orderedByTotalDose = graphData.filter(item => item.date.getDay() == day)
                                     .slice()
                                     .sort(function(a, b) { return (b.totalDailyDoses - a.totalDailyDoses); });
@@ -341,21 +442,23 @@ function processVaccinationsByDay(lastTweetId) {
   }
 
   let status = '💉 Vaccinations: By day' +
-              `\nDoses: ${moment(graphData[graphData.length - 1].date).format('ddd, Do MMMM')}` + 
+              `\n${moment(graphData[graphData.length - 1].date).format('ddd, Do MMMM')}` + 
               `\n1st: ${dailyFirstDose.string}` +
               `\n2nd: ${dailySecondDose.string}` + 
               `\nSingle: ${dailySingleDose.string}` +
               `\nBooster: ${dailyBooster.string}` +
+              `\nImmunocompromised: ${dailyImmunocompromised.string}` +
               '\n' + 
-              `\nDoses ${previousDay}(Diff | % diff)` + 
+              `\n${previousDay}(Diff | % diff)` + 
               `\n1st: ${previousFirstDose.string}${firstDoseChange.toString}` +
               `\n2nd: ${previousSecondDose.string}${secondDoseChange.toString}` +
               `\nSingle: ${previousSingleDose.string}${singleDoseChange.toString}` +
-              `\nBooster: ${previousBooster.string}${boosterChange.toString}`;
+              `\nBooster: ${previousBooster.string}${boosterChange.toString}` +
+              `\nImmunocompromised: ${previousImmunocompromised.string}${immunocompromisedChange.toString}`;
             
   let url = 'https://tetsujin1979.github.io/covid19dashboard?dataSelection=vaccinations&dateSelection=lastTwoMonths&graphType=byWeekday&day=' + day + '&displayType=graph&trendLine=false';
   let tweet = constants.createTweet(status, url);
-  let configuration = generateConfiguration(labels, firstDose, secondDose, singleDose, booster, over12TotalFirstDoses, over12TotalSecondDoses, over12TotalSingleDoses, over12TotalBooster, "Vaccinations By Day - " + days[day]);
+  let configuration = generateConfiguration(labels, firstDose, secondDose, singleDose, booster, immunocompromised, over12TotalFirstDoses, over12TotalSecondDoses, over12TotalSingleDoses, over12TotalBooster, over12TotalImmunocompromised, "Vaccinations By Day - " + days[day]);
   let b64Content = chartHelper.writeChart(directory + '/byDay.png', configuration);
   twitterHelper.tweetChart(b64Content, tweet, processWeeklyVaccinations, lastTweetId);
 }
@@ -381,17 +484,20 @@ function processRollingSevenDayAverage(inReplyToId) {
       secondDose.data.push(today.sevenDayAverageSecondDose);
       singleDose.data.push(today.sevenDayAverageSingleDose);
       booster.data.push(today.sevenDayAverageBooster);
+      immunocompromised.data.push(today.immunocompromised);
       over12TotalFirstDoses.data.push(today.totalFirstDose);
       over12TotalSecondDoses.data.push(today.totalSecondDose);
       over12TotalSingleDoses.data.push(today.totalSingleDose);
       over12TotalBooster.data.push(today.totalBooster);
+      over12TotalImmunocompromised.data.push(today.totalImmunocompromised);
     }
   }
   let sevenDayAverageFirstDose = firstDose.data[firstDose.data.length - 1];
   let sevenDayAverageSecondDose = secondDose.data[firstDose.data.length - 1];
   let sevenDayAverageSingleDose = singleDose.data[singleDose.data.length - 1];
   let sevenDayAverageBooster = booster.data[singleDose.data.length - 1];
-  let sevenDayAverageTotalDose = Decimal.sum(sevenDayAverageFirstDose, sevenDayAverageSecondDose, sevenDayAverageSingleDose);
+  let sevenDayAverageImmunocompromised = immunocompromised.data[singleDose.data.length - 1];
+  let sevenDayAverageTotalDose = Decimal.sum(sevenDayAverageFirstDose, sevenDayAverageSecondDose, sevenDayAverageSingleDose, sevenDayAverageBooster, sevenDayAverageImmunocompromised);
   let firstDosesOver16Remaining = new Decimal(over12).minus(finalEntry.totalFirstDose.plus(finalEntry.totalSingleDose));
   let estimatedDaysToTotalFirstDose = firstDosesOver16Remaining.dividedBy(Decimal.sum(sevenDayAverageFirstDose, sevenDayAverageSingleDose)).ceil();
   let secondDosesAdministered = sevenDayAverageSecondDose.times(estimatedDaysToTotalFirstDose);
@@ -415,12 +521,13 @@ function processRollingSevenDayAverage(inReplyToId) {
               `\n2nd dose: ${sevenDayAverageSecondDose.toNumber().toLocaleString('en')}` + 
               `\nSingle dose: ${sevenDayAverageSingleDose.toNumber().toLocaleString('en')}` +
               `\nBooster: ${sevenDayAverageBooster.toNumber().toLocaleString('en')}` +
+              `\nImmunocompromised: ${sevenDayAverageImmunocompromised.toNumber().toLocaleString('en')}` +
               `\nTotal doses: ${sevenDayAverageTotalDose.toNumber().toLocaleString('en')}`;
 
   const url = `\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=vaccinations&dateSelection=lastTwoMonths&graphType=rollingSevenDayAverage&displayType=graph&trendLine=false`;
 
   let tweet = constants.createTweet(status, url);
-  let configuration = generateConfiguration(labels, firstDose, secondDose, singleDose, booster, over12TotalFirstDoses, over12TotalSecondDoses, over12TotalSingleDoses, over12TotalBooster, "Seven Day Average Vaccinations");
+  let configuration = generateConfiguration(labels, firstDose, secondDose, singleDose, booster, immunocompromised, over12TotalFirstDoses, over12TotalSecondDoses, over12TotalSingleDoses, over12TotalBooster, over12TotalImmunocompromised, "Seven Day Average Vaccinations");
   let b64Content = chartHelper.writeChart(directory + '/processRollingSevenDayAverage.png', configuration);
   twitterHelper.tweetChart(b64Content, tweet, processVaccinationsByDay, inReplyToId);
 }
@@ -437,15 +544,18 @@ function processWeeklyVaccinations(inReplyToId) {
       secondDose.data.push(value.weeklySecondDoses);
       singleDose.data.push(value.weeklySingleDoses);
       booster.data.push(value.weeklyBooster);
+      immunocompromised.data.push(value.weeklyImmunocompromised);
       over12TotalFirstDoses.data.push(value.totalFirstDose);
       over12TotalSecondDoses.data.push(value.totalSecondDose);
       over12TotalSingleDoses.data.push(value.totalSingleDose);
       over12TotalBooster.data.push(value.totalBooster);
+      over12TotalImmunocompromised.data.push(value.totalImmunocompromised);
     });
     let weeklyFirstDose = constants.valueAndString(firstDose.data[firstDose.data.length - 1]);
     let weeklySecondDose = constants.valueAndString(secondDose.data[secondDose.data.length - 1]);
     let weeklySingleDose = constants.valueAndString(singleDose.data[singleDose.data.length - 1]);
     let weeklyBooster = constants.valueAndString(booster.data[booster.data.length - 1]);
+    let weeklyImmunocompromised = constants.valueAndString(immunocompromised.data[immunocompromised.data.length - 1]);
     let weeklyTotal = constants.valueAndString(weeklyData[weeklyData.length - 1].weeklyTotalDoses);
 
     let orderedByFirstDoses = weeklyData.slice().filter(item => item.date.getDay() === 0).sort(function(a, b) { return (b.weeklyFirstDoses.minus(a.weeklyFirstDoses).toNumber());  });
@@ -464,6 +574,18 @@ function processWeeklyVaccinations(inReplyToId) {
     if (orderedBySingleDoses[0].weeklySecondDoses.equals(weeklySingleDose.value)) {
       let previousHighSingleDoses = Number(orderedBySingleDoses[1].weeklySingleDoses).toLocaleString('en');
       records.push(`🥇 Record Weekly Single Doses adminstered - ${weeklySingleDose.string} - Previous high: ${moment(orderedBySingleDoses[1].date).format('dddd, Do MMMM')}(${previousHighSingleDoses})`);
+    }
+
+    let orderedByBooster = weeklyData.slice().filter(item => item.date.getDay() === 0).sort(function(a, b) { return (b.weeklyBooster.minus(a.weeklyBooster).toNumber());  });
+    if (orderedByBooster[0].weeklyBooster.equals(weeklyBooster.value)) {
+      let previousHighBooster = Number(orderedByBooster[1].weeklyBooster).toLocaleString('en');
+      records.push(`🥇 Record Weekly Booster Doses adminstered - ${weeklyBooster.string} - Previous high: ${moment(orderedByBooster[1].date).format('dddd, Do MMMM')}(${previousHighBooster})`);
+    }
+
+    let orderedByImmunocompromised = weeklyData.slice().filter(item => item.date.getDay() === 0).sort(function(a, b) { return (b.weeklyImmunocompromised.minus(a.weeklyImmunocompromised).toNumber());  });
+    if (orderedByImmunocompromised[0].weeklyImmunocompromised.equals(weeklyImmunocompromised.value)) {
+      let previousHighImmunocompromised = Number(orderedByImmunocompromised[1].weeklyBooster).toLocaleString('en');
+      records.push(`🥇 Record Weekly Immunocompromised Doses adminstered - ${weeklyImmunocompromised.string} - Previous high: ${moment(orderedByImmunocompromised[1].date).format('dddd, Do MMMM')}(${previousHighImmunocompromised})`);
     }
 
     let orderedByTotalDoses = weeklyData.slice().filter(item => item.date.getDay() === 0).sort(function(a, b) { return (b.weeklyTotalDoses.minus(a.weeklyTotalDoses).toNumber());  });
@@ -490,19 +612,13 @@ function processWeeklyVaccinations(inReplyToId) {
                   `\n2nd: ${weeklySecondDose.string}` +
                   `\nSingle: ${weeklySingleDose.string}` +
                   `\nBooster: ${weeklyBooster.string}` +
-                  `\nTotal: ${weeklyTotal.string}` +  
-                  '\n' +
-                  `\n${moment(weeklyData[weeklyData.length - 2].date).format('ddd, Do MMM')}(Diff | % Diff)` + 
-                  `\n1st: ${previousWeeksFirstDose.string}${firstDoseDifference.toString}` +
-                  `\n2nd: ${previousWeeksSecondDose.string}${secondDoseDifference.toString}` +
-                  `\nSingle: ${previousWeeksSingleDose.string}${singleDoseDifference.toString}` +
-                  `\nTotal: ${previousWeeksTotal.string}${totalDifference.toString}`;
+                  `\nImmunocompromised: ${weeklyImmunocompromised.string}` +
+                  `\nTotal: ${weeklyTotal.string}`;
 
     const url = '\nhttps://tetsujin1979.github.io/covid19dashboard?dataSelection=vaccinations&dateSelection=lastTwoMonths&graphType=weeklyTotal&displayType=graph&trendLine=false';
 
     let tweet = constants.createTweet(status, url);
-    let configuration = generateConfiguration(labels, firstDose, secondDose, singleDose, over12TotalFirstDoses, over12TotalSecondDoses, over12TotalSingleDoses, "Weekly Vaccination Totals");
-    over12TotalSingleDoses
+    let configuration = generateConfiguration(labels, firstDose, secondDose, singleDose, booster, immunocompromised, over12TotalFirstDoses, over12TotalSecondDoses, over12TotalSingleDoses, over12TotalBooster, over12TotalImmunocompromised, "Weekly Vaccination Totals");
     let b64Content = chartHelper.writeChart(directory + '/weeklyTotals.png', configuration);
     twitterHelper.tweetChart(b64Content, tweet, tweetRecords, inReplyToId);        
 
@@ -511,12 +627,12 @@ function processWeeklyVaccinations(inReplyToId) {
   }
 }
 
-function generateConfiguration(labels, firstDose, secondDose, singleDose, booster, over12TotalFirstDoses, over12TotalSecondDoses, over12TotalSingleDoses, over12TotalBooster, title) {
+function generateConfiguration(labels, firstDose, secondDose, singleDose, booster, immunocompromised, over12TotalFirstDoses, over12TotalSecondDoses, over12TotalSingleDoses, over12TotalBooster, over12TotalImmunocompromised, title) {
   return {
     type: "bar",
     data: {
       labels: labels,
-      datasets: [firstDose, secondDose, singleDose, booster, over12TotalFirstDoses, over12TotalSecondDoses, over12TotalSingleDoses, over12TotalBooster]
+      datasets: [firstDose, secondDose, singleDose, booster, immunocompromised, over12TotalFirstDoses, over12TotalSecondDoses, over12TotalSingleDoses, over12TotalBooster, over12TotalImmunocompromised]
     },
     options: {
       title: {
@@ -558,11 +674,11 @@ function generateConfiguration(labels, firstDose, secondDose, singleDose, booste
   };
 }
 
-function generateDoughnutConfiguration(labels, firstDosePercentage, secondDosePercentage, singleDosePercentage, boosterPercentage) {
+function generateDoughnutConfiguration(labels, firstDosePercentage, secondDosePercentage, singleDosePercentage, boosterPercentage, immunocompromisedPercentage) {
   return {
     type: "doughnut",
     data: {
-      labels: ["Single Dose", "First Dose", "Second Dose", "Booster"],
+      labels: ["Single Dose", "First Dose", "Second Dose", "Booster", "Immunocompromised"],
       datasets: [{
         label: 'First Dose label',
         data: [singleDosePercentage, firstDosePercentage, (100 - (firstDosePercentage.plus(singleDosePercentage).toNumber()))],
@@ -577,8 +693,8 @@ function generateDoughnutConfiguration(labels, firstDosePercentage, secondDosePe
         borderWidth: 1
       }, {
         label: 'Booster label',
-        data: [boosterPercentage, (100 - boosterPercentage.toNumber())],
-        backgroundColor: ['rgba(0, 168, 168, 0.6)', 'rgba(228, 233, 237, 1)'],
+        data: [immunocompromisedPercentage, boosterPercentage, (100 - boosterPercentage.plus(immunocompromisedPercentage).toNumber())],
+        backgroundColor: ['rgba(217, 211, 19, 0.6)', 'rgba(0, 168, 168, 0.6)', 'rgba(228, 233, 237, 1)'],
         color: 'blue',
         borderWidth: 1
       }]
@@ -597,10 +713,12 @@ function initialise() {
   secondDose.data = new Array();
   singleDose.data = new Array();
   booster.data = new Array();
+  immunocompromised.data = new Array();
   over12TotalFirstDoses.data = new Array();
   over12TotalSecondDoses.data = new Array();
   over12TotalFirstDoses.data = new Array();
   over12TotalBooster.data = new Array();
+  over12TotalImmunocompromised.data = new Array();
 }
 
 function testUndefined(value) {
