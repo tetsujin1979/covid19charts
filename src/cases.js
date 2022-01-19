@@ -132,8 +132,8 @@ function processNewCases() {
     }
     const status = '🦠 Cases:' + 
                    `\n${moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM')}: ${dailyPcrCases.data[dailyPcrCases.data.length - 1].toLocaleString('en')} PCR` + 
-                   (dailyAntigenCases.data[dailyAntigenCases.data.length - 1] != null ? `\n${moment(graphData[graphData.length - 2].date).format('dddd, Do MMMM')}: ${dailyAntigenCases.data[dailyAntigenCases.data.length - 1].toLocaleString('en')} Antigen` : '') + 
-                   `\nTotal cases announced: ${(dailyPcrCases.data[dailyPcrCases.data.length - 1] + dailyAntigenCases.data[dailyAntigenCases.data.length - 1]).toLocaleString('en')}` +
+                   (dailyAntigenCases.data[dailyAntigenCases.data.length - 2] != null ? `\n${moment(graphData[graphData.length - 2].date).format('dddd, Do MMMM')}: ${dailyAntigenCases.data[dailyAntigenCases.data.length - 2].toLocaleString('en')} Antigen` : '') + 
+                   `\nTotal cases announced: ${(dailyPcrCases.data[dailyPcrCases.data.length - 1] + (dailyAntigenCases.data[dailyAntigenCases.data.length - 2] != null ? dailyAntigenCases.data[dailyAntigenCases.data.length - 2] : 0)).toLocaleString('en')}` +
 //                '\nTotal cases: ' + Number(totalCases.data[totalCases.data.length - 1]).toLocaleString('en') + 
                 // If it's been more than 14 days since a lower number of new cases, add that to the tweet
                 (lastDayLessCases.dateDifference > 14 ? `\nLowest PCR cases since ${moment(lastDayLessCases.date).format('dddd, Do MMMM')}(${lastDayLessCases.cases.toLocaleString()})`: '') +
@@ -168,13 +168,13 @@ function processRollingSevenDayAverage(inReplyToId) {
             if (value.hasOwnProperty("sevenDayAverageAntigen")) {
                 dailyAntigenCases.data.push(value.sevenDayAverageAntigen); 
             } else {
-                dailyAntigenCases.data.push(null); 
+                dailyAntigenCases.data.push(0); 
             }
         }
     }
-    let newCases = constants.valueAndString(dailyPcrCases.data[dailyPcrCases.data.length - 1]);
-    let previousDaysCases = constants.valueAndString(dailyPcrCases.data[dailyPcrCases.data.length - 8]);
-    let previousWeeksCases = constants.valueAndString(dailyPcrCases.data[dailyPcrCases.data.length - 15]);
+    let newCases = constants.valueAndString(dailyPcrCases.data[dailyPcrCases.data.length - 1] + dailyAntigenCases.data[dailyAntigenCases.data.length - 1]);
+    let previousDaysCases = constants.valueAndString(dailyPcrCases.data[dailyPcrCases.data.length - 8] + dailyAntigenCases.data[dailyAntigenCases.data.length - 8]);
+    let previousWeeksCases = constants.valueAndString(dailyPcrCases.data[dailyPcrCases.data.length - 15] + dailyAntigenCases.data[dailyAntigenCases.data.length - 15]);
 
     let previousDaysCasesDifference = constants.difference(newCases.value, previousDaysCases.value);
     let previousWeeksCasesDifference = constants.difference(newCases.value, previousWeeksCases.value);
@@ -213,7 +213,7 @@ function processRollingSevenDayAverage(inReplyToId) {
         logger.debug(`${lastDayMoreCases.dateDifference} days since a higher number of cases - ${lastWeekHighCases.date}(${lastWeekHighCases.sevenDayAveragePcr})`);
     }
 
-    const status = `🦠 Cases: Seven day average\nDate: PCR Cases(Difference | % difference)` +
+    const status = `🦠 Cases: Seven day average\nDate: Total Cases(Difference | % difference)` +
                 `\n${moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM')}: ${newCases.string}` + 
                 // If it's been more than 14 days since a lower number of new cases, add that to the tweet
                 (lastDayLessCases.dateDifference > 21 ? `(Lowest since ${moment(lastDayLessCases.date).format('dddd, Do MMMM')} - ${lastDayLessCases.sevenDayAveragePcr})`: '') +
@@ -254,7 +254,7 @@ function processCasesByDay(inReplyToId) {
     let previousDaysCasesDifference = constants.difference(newCases.value, previousDaysCases.value);
     let previousWeeksCasesDifference = constants.difference(newCases.value, previousWeeksCases.value);
 
-    const status = '🦠 Cases: By day\nDate: Cases(Difference | % difference)' +
+    const status = '🦠 Cases: By day\nDate: PCR Cases(Difference | % difference)' +
             `\n${moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM')}: ${newCases.string}` + 
             `\n${moment(graphData[graphData.length - 8].date).format('dddd, Do MMMM')}: ${previousDaysCases.string}${previousDaysCasesDifference.toString}` +
             `\n${moment(graphData[graphData.length - 15].date).format('dddd, Do MMMM')}: ${previousWeeksCases.string}${previousWeeksCasesDifference.toString}`;
