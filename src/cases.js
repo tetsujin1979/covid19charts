@@ -13,10 +13,21 @@ const oneMonthAgo = constants.oneMonthAgo();
 
 const graphData = new Array();
 
-const dailyCases = {
-    label: "Cases",
+let labels = new Array();
+
+const dailyPcrCases = {
+    label: "PCR Cases",
     data: [],
-    backgroundColor: "rgba(237, 100, 127, .6)",
+    backgroundColor: "rgba(237, 100, 127, 0.7)",
+    borderColor: "rgba(233,0,45, 1)",
+    borderWidth: 0,
+    yAxisID: "dailyCasesAxis"
+};
+
+const dailyAntigenCases = {
+    label: "Antigen Cases",
+    data: [],
+    backgroundColor: "rgba(43, 57, 133, 0.5)",
     borderColor: "rgba(233,0,45, 1)",
     borderWidth: 0,
     yAxisID: "dailyCasesAxis"
@@ -34,17 +45,19 @@ const totalCases = {
 
 function processData(covidData) {
     logger.info('Processing cases');
-    let cases = [];
     let totalCases = 0;
     covidData.filter(item => (item.hasOwnProperty("dateString") && item.hasOwnProperty("cases")))
              .forEach(function(item, index) {
-        totalCases += item.cases;
+        totalCases += item.cases + (item.hasOwnProperty("antigen") ? item.antigen : 0);
         let date = new Date(item.dateString);
         let caseData = {
           date: date,
           cases: item.cases,
           totalCases: totalCases
         };
+        if (item.hasOwnProperty("antigen")) {
+          caseData.antigen = item.antigen;
+        } 
         if (index > 7) {
             let today = covidData[index];
             let yesterday = covidData[index - 1];
@@ -53,10 +66,13 @@ function processData(covidData) {
             let fourDaysAgo = covidData[index - 4];
             let fiveDaysAgo = covidData[index - 5];
             let sixDayAgo = covidData[index - 6];
-            let weeklyCases = today.cases + yesterday.cases + twoDaysAgo.cases + threeDaysAgo.cases + fourDaysAgo.cases + fiveDaysAgo.cases + sixDayAgo.cases;
-            caseData.sevenDayAverage = (weeklyCases / 7).toFixed(2);
+            let weeklyPcrCases = today.cases + yesterday.cases + twoDaysAgo.cases + threeDaysAgo.cases + fourDaysAgo.cases + fiveDaysAgo.cases + sixDayAgo.cases;
+            let weeklyAntigenCases = testUndefined(today.antigen) + testUndefined(yesterday.antigen) + testUndefined(twoDaysAgo.antigen) + testUndefined(threeDaysAgo.antigen) + testUndefined(fourDaysAgo.antigen) + testUndefined(fiveDaysAgo.antigen) + testUndefined(sixDayAgo.antigen);
+            caseData.sevenDayAveragePcr = (weeklyPcrCases / 7).toFixed(2);
+            caseData.sevenDayAverageAntigen = (weeklyAntigenCases / 7).toFixed(2);
             if (date.getDay() === 0) {
-                caseData.weeklyCases = weeklyCases;
+                caseData.weeklyPcrCases = weeklyPcrCases;
+                caseData.weeklyAntigenCases = weeklyAntigenCases;
             }
         }
         graphData.push(caseData);
@@ -66,16 +82,19 @@ function processData(covidData) {
 
 function processNewCases() {
     logger.info("Processing new cases");
-    let labels = new Array();
-    dailyCases.data = new Array();
-    totalCases.data = new Array();
+    initialise();
     graphData.filter(item => item.date > oneMonthAgo)
              .forEach(function(value, index) {
         labels.push(value.date.toDateString());
-        dailyCases.data.push(value.cases);
+        dailyPcrCases.data.push(value.cases);
         totalCases.data.push(value.totalCases);
+        if (value.hasOwnProperty("antigen")) {
+            dailyAntigenCases.data.push(value.antigen); 
+        } else {
+            dailyAntigenCases.data.push(null); 
+        }
     });
-    let newCases = dailyCases.data[dailyCases.data.length - 1];
+    let newCases = dailyPcrCases.data[dailyPcrCases.data.length - 1];
     logger.debug(`${labels[labels.length - 1]}: ${newCases} new cases`);
     // Array of objects where the number of new cases is less than today's new cases
     let lessCases = graphData.filter(item => item.cases < newCases);
@@ -111,29 +130,26 @@ function processNewCases() {
         lastDayMoreCases.dateDifference = moment(graphData[graphData.length - 1].date).diff(moment(lastWeekHighCases.date), 'days');
         logger.debug(`${lastDayMoreCases.dateDifference} days since a higher number of cases - ${lastWeekHighCases.date}(${lastWeekHighCases.cases})`);
     }
-    let previousDaysCases = dailyCases.data[dailyCases.data.length - 2];
-    let change = newCases - previousDaysCases;
-    let percentageChange = ((change * 100) / previousDaysCases).toFixed(2)
-    const status = '🦠 Cases: Daily cases' + 
-                   `\n${moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM')}: ${newCases.toLocaleString('en')}` + 
+    const status = '🦠 Cases:' + 
+                   `\n${moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM')}: ${dailyPcrCases.data[dailyPcrCases.data.length - 1].toLocaleString('en')} PCR` + 
+                   (dailyAntigenCases.data[dailyAntigenCases.data.length - 1] != null ? `\n${moment(graphData[graphData.length - 2].date).format('dddd, Do MMMM')}: ${dailyAntigenCases.data[dailyAntigenCases.data.length - 1].toLocaleString('en')} Antigen` : '') + 
+                   `\nTotal cases announced: ${(dailyPcrCases.data[dailyPcrCases.data.length - 1] + dailyAntigenCases.data[dailyAntigenCases.data.length - 1]).toLocaleString('en')}` +
 //                '\nTotal cases: ' + Number(totalCases.data[totalCases.data.length - 1]).toLocaleString('en') + 
                 // If it's been more than 14 days since a lower number of new cases, add that to the tweet
-                (lastDayLessCases.dateDifference > 14 ? `\nLowest since ${moment(lastDayLessCases.date).format('dddd, Do MMMM')}(${lastDayLessCases.cases.toLocaleString()})`: '') +
+                (lastDayLessCases.dateDifference > 14 ? `\nLowest PCR cases since ${moment(lastDayLessCases.date).format('dddd, Do MMMM')}(${lastDayLessCases.cases.toLocaleString()})`: '') +
                 // If it's been more than 14 days since a higher number of new cases, add that to the tweet
-                (lastDayMoreCases.dateDifference > 14 ? `\nHighest since ${moment(lastDayMoreCases.date).format('dddd, Do MMMM')}(${lastDayMoreCases.cases.toLocaleString()})`: '');
+                (lastDayMoreCases.dateDifference > 14 ? `\nHighest PCR cases since ${moment(lastDayMoreCases.date).format('dddd, Do MMMM')}(${lastDayMoreCases.cases.toLocaleString()})`: '');
 
     const url = 'https://tetsujin1979.github.io/covid19dashboard?dataSelection=cases&dateSelection=lastTwoMonths&graphType=normal&displayType=graph&trendLine=true';
     let tweet = constants.createTweet(status, url);
-    let configuration = generateConfiguration(labels, totalCases, dailyCases, "Daily Cases");
-    let b64Content = chartHelper.writeChart(directory + '/dailyCases.png', configuration);
+    let configuration = generateConfiguration(labels, totalCases, dailyPcrCases, dailyAntigenCases, "Daily Cases");
+    let b64Content = chartHelper.writeChart(directory + '/dailyPcrCases.png', configuration);
     twitterHelper.tweetChart(b64Content, tweet, processRollingSevenDayAverage);
 }
 
 function processRollingSevenDayAverage(inReplyToId) {
     logger.info("Processing seven day average");
-    let labels = new Array();
-    dailyCases.data = new Array();
-    totalCases.data = new Array();
+    initialise();
 
     let initialCasesIndex = 0;
     let todayDay = new Date().getDay();
@@ -147,30 +163,35 @@ function processRollingSevenDayAverage(inReplyToId) {
         let value = graphData[index];
         if (value.date > oneMonthAgo) {
             labels.push(value.date.toDateString());
-            dailyCases.data.push(value.sevenDayAverage);
+            dailyPcrCases.data.push(value.sevenDayAveragePcr);
             totalCases.data.push(value.totalCases);
+            if (value.hasOwnProperty("sevenDayAverageAntigen")) {
+                dailyAntigenCases.data.push(value.sevenDayAverageAntigen); 
+            } else {
+                dailyAntigenCases.data.push(null); 
+            }
         }
     }
-    let newCases = constants.valueAndString(dailyCases.data[dailyCases.data.length - 1]);
-    let previousDaysCases = constants.valueAndString(dailyCases.data[dailyCases.data.length - 8]);
-    let previousWeeksCases = constants.valueAndString(dailyCases.data[dailyCases.data.length - 15]);
+    let newCases = constants.valueAndString(dailyPcrCases.data[dailyPcrCases.data.length - 1]);
+    let previousDaysCases = constants.valueAndString(dailyPcrCases.data[dailyPcrCases.data.length - 8]);
+    let previousWeeksCases = constants.valueAndString(dailyPcrCases.data[dailyPcrCases.data.length - 15]);
 
     let previousDaysCasesDifference = constants.difference(newCases.value, previousDaysCases.value);
     let previousWeeksCasesDifference = constants.difference(newCases.value, previousWeeksCases.value);
 
-    let lessCases = graphData.filter(item => Number(item.sevenDayAverage) < Number(newCases.value));
-    let higherCases = graphData.filter(item => Number(item.sevenDayAverage) > Number(newCases.value));
+    let lessCases = graphData.filter(item => Number(item.sevenDayAveragePcr) < Number(newCases.value));
+    let higherCases = graphData.filter(item => Number(item.sevenDayAveragePcr) > Number(newCases.value));
     logger.debug(`Found ${lessCases.length} days with less cases`);
     logger.debug(`Found ${higherCases.length} days with more cases`);
     // An object for the last day with less cases than today
     let lastDayLessCases = {
         date: new Date(),   // The date
-        sevenDayAverage: 0,           // The number of cases
+        sevenDayAveragePcr: 0,           // The number of cases
         dateDifference: 0   // The number of days since a lower number of cases
     };
     let lastDayMoreCases = {
         date: new Date(),   // The date
-        sevenDayAverage: 0,           // The number of cases
+        sevenDayAveragePcr: 0,           // The number of cases
         dateDifference: 0   // The number of days since a lower number of cases
     };
     if (lessCases.length > 0) {
@@ -178,33 +199,33 @@ function processRollingSevenDayAverage(inReplyToId) {
         let lastDayLowCases = lessCases[lessCases.length - 1];
         // The number of days since the above
         lastDayLessCases.date = lastDayLowCases.date;
-        lastDayLessCases.sevenDayAverage = lastDayLowCases.sevenDayAverage;
+        lastDayLessCases.sevenDayAveragePcr = lastDayLowCases.sevenDayAveragePcr;
         lastDayLessCases.dateDifference = moment(graphData[graphData.length - 1].date).diff(moment(lastDayLessCases.date), 'days');
-        logger.debug(`${lastDayLessCases.dateDifference} days since a lower number of cases - ${lastDayLessCases.date}(${lastDayLessCases.sevenDayAverage})`);
+        logger.debug(`${lastDayLessCases.dateDifference} days since a lower number of cases - ${lastDayLessCases.date}(${lastDayLessCases.sevenDayAveragePcr})`);
     }
     if (higherCases.length > 0) {
         // The last entry in the array, i.e. the last date with more cases than today
         let lastWeekHighCases = higherCases[higherCases.length - 1];
         // The number of days since the above
         lastDayMoreCases.date = lastWeekHighCases.date;
-        lastDayMoreCases.sevenDayAverage = lastWeekHighCases.sevenDayAverage;
+        lastDayMoreCases.sevenDayAveragePcr = lastWeekHighCases.sevenDayAveragePcr;
         lastDayMoreCases.dateDifference = moment(graphData[graphData.length - 1].date).diff(moment(lastWeekHighCases.date), 'days');
-        logger.debug(`${lastDayMoreCases.dateDifference} days since a higher number of cases - ${lastWeekHighCases.date}(${lastWeekHighCases.sevenDayAverage})`);
+        logger.debug(`${lastDayMoreCases.dateDifference} days since a higher number of cases - ${lastWeekHighCases.date}(${lastWeekHighCases.sevenDayAveragePcr})`);
     }
 
-    const status = `🦠 Cases: Seven day average\nDate: Cases(Difference | % difference)` +
+    const status = `🦠 Cases: Seven day average\nDate: PCR Cases(Difference | % difference)` +
                 `\n${moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM')}: ${newCases.string}` + 
                 // If it's been more than 14 days since a lower number of new cases, add that to the tweet
-                (lastDayLessCases.dateDifference > 21 ? `(Lowest since ${moment(lastDayLessCases.date).format('dddd, Do MMMM')} - ${lastDayLessCases.sevenDayAverage})`: '') +
+                (lastDayLessCases.dateDifference > 21 ? `(Lowest since ${moment(lastDayLessCases.date).format('dddd, Do MMMM')} - ${lastDayLessCases.sevenDayAveragePcr})`: '') +
                 // If it's been more than 14 days since a higher number of new cases, add that to the tweet
-                (lastDayMoreCases.dateDifference > 21 ? `(Highest since ${moment(lastDayMoreCases.date).format('dddd, Do MMMM')} - ${lastDayMoreCases.sevenDayAverage})`: '') +
+                (lastDayMoreCases.dateDifference > 21 ? `(Highest since ${moment(lastDayMoreCases.date).format('dddd, Do MMMM')} - ${lastDayMoreCases.sevenDayAveragePcr})`: '') +
                 `\n${moment(graphData[graphData.length - 8].date).format('dddd, Do MMMM')}: ${previousDaysCases.string}${previousDaysCasesDifference.toString}` +
                 `\n${moment(graphData[graphData.length - 15].date).format('dddd, Do MMMM')}: ${previousWeeksCases.string}${previousWeeksCasesDifference.toString}`;
     
     const url = 'https://tetsujin1979.github.io/covid19dashboard?dataSelection=cases&dateSelection=lastTwoMonths&graphType=rollingSevenDayAverage&displayType=graph&trendLine=false';
 
     let tweet = constants.createTweet(status, url);
-    let configuration = generateConfiguration(labels, totalCases, dailyCases, "Seven Day Average Cases");
+    let configuration = generateConfiguration(labels, totalCases, dailyPcrCases, dailyAntigenCases, "Seven Day Average Cases");
     let b64Content = chartHelper.writeChart(directory + '/rollingSevenDayAverage.png', configuration);
     twitterHelper.tweetChart(b64Content, tweet, processCasesByDay, inReplyToId);
 }
@@ -212,20 +233,23 @@ function processRollingSevenDayAverage(inReplyToId) {
 
 function processCasesByDay(inReplyToId) {
     logger.info("Processing cases by day");
-    let labels = new Array();
-    dailyCases.data = new Array();
-    totalCases.data = new Array();
+    initialise();
 
     let day = graphData[graphData.length - 1].date.getDay();
     graphData.filter(item => ((item.date > oneMonthAgo) && (item.date.getDay() === day)))
              .forEach(function(value, index) { 
         labels.push(value.date.toDateString());
-        dailyCases.data.push(value.cases);
+        dailyPcrCases.data.push(value.cases);
         totalCases.data.push(value.totalCases);
+        if (value.hasOwnProperty("antigen")) {
+            dailyAntigenCases.data.push(value.antigen); 
+        } else {
+            dailyAntigenCases.data.push(null); 
+        }
     });
-    let newCases = constants.valueAndString(dailyCases.data[dailyCases.data.length - 1]);
-    let previousDaysCases = constants.valueAndString(dailyCases.data[dailyCases.data.length - 2]);
-    let previousWeeksCases = constants.valueAndString(dailyCases.data[dailyCases.data.length - 3]);
+    let newCases = constants.valueAndString(dailyPcrCases.data[dailyPcrCases.data.length - 1]);
+    let previousDaysCases = constants.valueAndString(dailyPcrCases.data[dailyPcrCases.data.length - 2]);
+    let previousWeeksCases = constants.valueAndString(dailyPcrCases.data[dailyPcrCases.data.length - 3]);
 
     let previousDaysCasesDifference = constants.difference(newCases.value, previousDaysCases.value);
     let previousWeeksCasesDifference = constants.difference(newCases.value, previousWeeksCases.value);
@@ -237,7 +261,7 @@ function processCasesByDay(inReplyToId) {
 
     const url = `https://tetsujin1979.github.io/covid19dashboard?dataSelection=cases&dateSelection=lastTwoMonths&graphType=byWeekday&day=${day}&displayType=graph&trendLine=false`;
     let tweet = constants.createTweet(status, url);
-    let configuration = generateConfiguration(labels, totalCases, dailyCases, "Daily Cases By Day - " + days[day]);
+    let configuration = generateConfiguration(labels, totalCases, dailyPcrCases, dailyAntigenCases, "Daily Cases By Day - " + days[day]);
     let b64Content = chartHelper.writeChart(directory + '/byDay.png', configuration);
     twitterHelper.tweetChart(b64Content, tweet, processWeeklyCases, inReplyToId);
 }
@@ -245,16 +269,16 @@ function processCasesByDay(inReplyToId) {
 function processWeeklyCases(inReplyToId) {
     if (graphData[graphData.length - 1].date.getDay() === 0) {
         logger.info("Processing weekly totals");
-        let labels = new Array();
-        dailyCases.data = new Array();
-        totalCases.data = new Array();
+        initialise();
+
         let weeklyData = graphData.filter(item => item.date > oneMonthAgo && item.date.getDay() === 0);
         weeklyData.forEach(function(value, index) { 
             labels.push(value.date.toDateString());
-            dailyCases.data.push(value.weeklyCases);
+            dailyPcrCases.data.push(value.weeklyPcrCases);
             totalCases.data.push(value.totalCases);
+            dailyAntigenCases.data.push(value.weeklyAntigenCases); 
         });
-        let newCases = constants.valueAndString(dailyCases.data[dailyCases.data.length - 1]);
+        let newCases = constants.valueAndString(dailyPcrCases.data[dailyPcrCases.data.length - 1]);
         let lessCases = graphData.filter(item => item.date.getDay() === 0 && item.weeklyCases < newCases.value);
         let higherCases = graphData.filter(item => item.date.getDay() === 0 && item.weeklyCases > newCases.value);
 
@@ -289,8 +313,8 @@ function processWeeklyCases(inReplyToId) {
             lastWeekMoreCases.dateDifference = moment(graphData[graphData.length - 1].date).diff(moment(lastWeekHighCases.date), 'weeks');
             logger.debug(`${lastWeekMoreCases.dateDifference} days since a higher number of cases - ${lastWeekMoreCases.date}(${lastWeekMoreCases.weeklyCases})`);
         }
-        let previousDaysCases = constants.valueAndString(dailyCases.data[dailyCases.data.length - 2]);
-        let previousWeeksCases = constants.valueAndString(dailyCases.data[dailyCases.data.length - 3]);
+        let previousDaysCases = constants.valueAndString(dailyPcrCases.data[dailyPcrCases.data.length - 2]);
+        let previousWeeksCases = constants.valueAndString(dailyPcrCases.data[dailyPcrCases.data.length - 3]);
 
         let previousDaysCasesDifference = constants.difference(newCases.value, previousDaysCases.value);
         let previousWeeksCasesDifference = constants.difference(newCases.value, previousWeeksCases.value);
@@ -304,18 +328,18 @@ function processWeeklyCases(inReplyToId) {
 
         const url = 'https://tetsujin1979.github.io/covid19dashboard?dataSelection=cases&dateSelection=lastTwoMonths&graphType=rollingSevenDayAverage&displayType=graph&trendLine=false';
         let tweet = constants.createTweet(status, url);
-        let configuration = generateConfiguration(labels, totalCases, dailyCases, "Weekly cases");
+        let configuration = generateConfiguration(labels, totalCases, dailyPcrCases, dailyAntigenCases, "Weekly cases");
         let b64Content = chartHelper.writeChart(directory + '/weeklyCases.png', configuration);
         twitterHelper.tweetChart(b64Content, tweet, function() { }, inReplyToId);        
     }
 }
 
-function generateConfiguration(labels, totalCases, dailyCases, title) {
+function generateConfiguration(labels, totalCases, dailyPcrCases, dailyAntigenCases, title) {
     return {
         type: "bar",
         data: {
             labels: labels,
-            datasets: [totalCases, dailyCases]
+            datasets: [totalCases, dailyPcrCases, dailyAntigenCases]
         },
         options: {
             title: {
@@ -324,7 +348,7 @@ function generateConfiguration(labels, totalCases, dailyCases, title) {
             scales: {
                 yAxes: [{
                     id: "dailyCasesAxis",
-                    position: "left",
+                    stacked: true,
                     ticks: {
                         beginAtZero: true,
                         autoskip: false
@@ -349,13 +373,29 @@ function generateConfiguration(labels, totalCases, dailyCases, title) {
                     }
                 }],
                 xAxes: [{
-                  ticks: {
-                    autoSkip: false
-                  }
+                    stacked: true,
+                    ticks: {
+                        autoSkip: false
+                    }
                 }]
             }
         }
     };
+}
+
+function initialise() {
+    labels = new Array();
+    dailyPcrCases.data = new Array();
+    dailyAntigenCases.data = new Array();
+    totalCases.data = new Array();
+}
+
+function testUndefined(value) {
+  let retVal = value;
+  if (!value) {
+    retVal = 0;
+  }
+  return retVal;
 }
 
 exports.processData = processData;
