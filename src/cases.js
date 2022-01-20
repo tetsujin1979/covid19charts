@@ -55,9 +55,7 @@ function processData(covidData) {
           cases: item.cases,
           totalCases: totalCases
         };
-        if (item.hasOwnProperty("antigen")) {
-          caseData.antigen = item.antigen;
-        } 
+        caseData.antigen = (item.hasOwnProperty("antigen") ? item.antigen : null);
         if (index > 7) {
             let today = covidData[index];
             let yesterday = covidData[index - 1];
@@ -65,15 +63,16 @@ function processData(covidData) {
             let threeDaysAgo = covidData[index - 3];
             let fourDaysAgo = covidData[index - 4];
             let fiveDaysAgo = covidData[index - 5];
-            let sixDayAgo = covidData[index - 6];
-            let weeklyPcrCases = today.cases + yesterday.cases + twoDaysAgo.cases + threeDaysAgo.cases + fourDaysAgo.cases + fiveDaysAgo.cases + sixDayAgo.cases;
-            let weeklyAntigenCases = testUndefined(today.antigen) + testUndefined(yesterday.antigen) + testUndefined(twoDaysAgo.antigen) + testUndefined(threeDaysAgo.antigen) + testUndefined(fourDaysAgo.antigen) + testUndefined(fiveDaysAgo.antigen) + testUndefined(sixDayAgo.antigen);
-            caseData.sevenDayAveragePcr = (weeklyPcrCases / 7).toFixed(2);
-            caseData.sevenDayAverageAntigen = (weeklyAntigenCases / 7).toFixed(2);
+            let sixDaysAgo = covidData[index - 6];
+            let weeklyPcrCases = today.cases + yesterday.cases + twoDaysAgo.cases + threeDaysAgo.cases + fourDaysAgo.cases + fiveDaysAgo.cases + sixDaysAgo.cases;
+            let weeklyAntigenCases = testUndefined(today.antigen) + testUndefined(yesterday.antigen) + testUndefined(twoDaysAgo.antigen) + testUndefined(threeDaysAgo.antigen) + testUndefined(fourDaysAgo.antigen) + testUndefined(fiveDaysAgo.antigen) + testUndefined(sixDaysAgo.antigen);
+            caseData.sevenDayAveragePcr = (weeklyPcrCases / 7);
+            caseData.sevenDayAverageAntigen = (weeklyAntigenCases / 7);
             if (date.getDay() === 0) {
                 caseData.weeklyPcrCases = weeklyPcrCases;
                 caseData.weeklyAntigenCases = weeklyAntigenCases;
             }
+
         }
         graphData.push(caseData);
     });
@@ -159,17 +158,13 @@ function processRollingSevenDayAverage(inReplyToId) {
         break;
       }
     }
-    for (let index = initialCasesIndex; index < graphData.length; index += 1) {
+    for (let index = initialCasesIndex; index < graphData.length; index ++) {
         let value = graphData[index];
         if (value.date > oneMonthAgo) {
             labels.push(value.date.toDateString());
             dailyPcrCases.data.push(value.sevenDayAveragePcr);
             totalCases.data.push(value.totalCases);
-            if (value.hasOwnProperty("sevenDayAverageAntigen")) {
-                dailyAntigenCases.data.push(value.sevenDayAverageAntigen); 
-            } else {
-                dailyAntigenCases.data.push(0); 
-            }
+            dailyAntigenCases.data.push(value.sevenDayAverageAntigen); 
         }
     }
     let newCases = constants.valueAndString(dailyPcrCases.data[dailyPcrCases.data.length - 1] + dailyAntigenCases.data[dailyAntigenCases.data.length - 1]);
