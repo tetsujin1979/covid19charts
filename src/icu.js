@@ -132,7 +132,7 @@ function processDailyICUData() {
 
     if (lowerHospitalisations.length > 0) {
         let lowerHospitalisation = lowerHospitalisations[lowerHospitalisations.length - 1];
-        let dateDifference = moment(finalEntry.date).diff(moment(lowerHospitalisations.date), 'days');
+        let dateDifference = moment(finalEntry.date).diff(moment(lowerHospitalisation.date), 'days');
         if (dateDifference > 14) {
             hospitalisationsRecord = `\nLowest icu cases since ${formatDate(lowerHospitalisation.date, finalEntry.date)}(${lowerHospitalisation.cases})`;
         }
