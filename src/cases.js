@@ -71,8 +71,8 @@ function processData(covidData) {
             if (date.getDay() === 0) {
                 caseData.weeklyPcrCases = weeklyPcrCases;
                 caseData.weeklyAntigenCases = weeklyAntigenCases;
+                caseData.totalWeeklyCases = weeklyPcrCases + weeklyAntigenCases;
             }
-
         }
         graphData.push(caseData);
     });
