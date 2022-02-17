@@ -167,6 +167,7 @@ function processRollingSevenDayAverage(inReplyToId) {
             dailyAntigenCases.data.push(value.sevenDayAverageAntigen); 
         }
     }
+    let todaysCases = graphData[graphData.length - 1];
     let newCases = constants.valueAndString(dailyPcrCases.data[dailyPcrCases.data.length - 1] + dailyAntigenCases.data[dailyAntigenCases.data.length - 1]);
     let previousDaysCases = constants.valueAndString(dailyPcrCases.data[dailyPcrCases.data.length - 8] + dailyAntigenCases.data[dailyAntigenCases.data.length - 8]);
     let previousWeeksCases = constants.valueAndString(dailyPcrCases.data[dailyPcrCases.data.length - 15] + dailyAntigenCases.data[dailyAntigenCases.data.length - 15]);
@@ -174,10 +175,10 @@ function processRollingSevenDayAverage(inReplyToId) {
     let previousDaysCasesDifference = constants.difference(newCases.value, previousDaysCases.value);
     let previousWeeksCasesDifference = constants.difference(newCases.value, previousWeeksCases.value);
 
-    let lessCases = graphData.filter(item => Number(item.sevenDayAveragePcr) < Number(newCases.value));
-    let higherCases = graphData.filter(item => Number(item.sevenDayAveragePcr) > Number(newCases.value));
-    logger.debug(`Found ${lessCases.length} days with less cases`);
-    logger.debug(`Found ${higherCases.length} days with more cases`);
+    let lessCases = graphData.filter(item => Number(item.sevenDayAveragePcr) + Number(item.sevenDayAverageAntigen) <= Number(todaysCases.sevenDayAveragePcr) + Number(todaysCases.sevenDayAverageAntigen) && item.date < todaysCases.date);
+    let higherCases = graphData.filter(item => Number(item.sevenDayAveragePcr) + Number(item.sevenDayAverageAntigen) >= Number(todaysCases.sevenDayAveragePcr) + Number(todaysCases.sevenDayAverageAntigen) && item.date < todaysCases.date);
+    logger.debug(`Found ${lessCases.length} days with less cases than ${todaysCases.date}`);
+    logger.debug(`Found ${higherCases.length} days with more cases than ${todaysCases.date}`);
     // An object for the last day with less cases than today
     let lastDayLessCases = {
         date: new Date(),   // The date
@@ -195,8 +196,9 @@ function processRollingSevenDayAverage(inReplyToId) {
         // The number of days since the above
         lastDayLessCases.date = lastDayLowCases.date;
         lastDayLessCases.sevenDayAveragePcr = lastDayLowCases.sevenDayAveragePcr;
+        lastDayLessCases.sevenDayAverageAntigen = lastDayLowCases.sevenDayAverageAntigen ? lastDayLowCases.sevenDayAverageAntigen : 0;
         lastDayLessCases.dateDifference = moment(graphData[graphData.length - 1].date).diff(moment(lastDayLessCases.date), 'days');
-        logger.debug(`${lastDayLessCases.dateDifference} days since a lower number of cases - ${lastDayLessCases.date}(${lastDayLessCases.sevenDayAveragePcr})`);
+        logger.debug(`${lastDayLessCases.dateDifference} days since a lower number of cases than ${newCases.string} - ${lastDayLessCases.date}(${lastDayLessCases.sevenDayAveragePcr + lastDayLessCases.sevenDayAverageAntigen})`);
     }
     if (higherCases.length > 0) {
         // The last entry in the array, i.e. the last date with more cases than today
@@ -204,16 +206,17 @@ function processRollingSevenDayAverage(inReplyToId) {
         // The number of days since the above
         lastDayMoreCases.date = lastWeekHighCases.date;
         lastDayMoreCases.sevenDayAveragePcr = lastWeekHighCases.sevenDayAveragePcr;
+        lastDayMoreCases.sevenDayAverageAntigen = lastDayMoreCases.sevenDayAverageAntigen ? lastDayMoreCases.sevenDayAverageAntigen : 0;
         lastDayMoreCases.dateDifference = moment(graphData[graphData.length - 1].date).diff(moment(lastWeekHighCases.date), 'days');
-        logger.debug(`${lastDayMoreCases.dateDifference} days since a higher number of cases - ${lastWeekHighCases.date}(${lastWeekHighCases.sevenDayAveragePcr})`);
+        logger.debug(`${lastDayMoreCases.dateDifference} days since a higher number of cases than ${newCases.string} - ${lastWeekHighCases.date}(${lastWeekHighCases.sevenDayAveragePcr + lastWeekHighCases.sevenDayAverageAntigen})`);
     }
 
     const status = `🦠 Cases: Seven day average\nDate: Total Cases(Difference | % difference)` +
                 `\n${moment(graphData[graphData.length - 1].date).format('dddd, Do MMMM')}: ${newCases.string}` + 
                 // If it's been more than 14 days since a lower number of new cases, add that to the tweet
-                (lastDayLessCases.dateDifference > 21 ? `(Lowest since ${moment(lastDayLessCases.date).format('dddd, Do MMMM')} - ${lastDayLessCases.sevenDayAveragePcr})`: '') +
+                (lastDayLessCases.dateDifference > 14 ? `\nLowest since ${moment(lastDayLessCases.date).format('dddd, Do MMMM')} - ${(Number(lastDayLessCases.sevenDayAveragePcr) + Number(lastDayLessCases.sevenDayAverageAntigen)).toFixed(2)}`: '') +
                 // If it's been more than 14 days since a higher number of new cases, add that to the tweet
-                (lastDayMoreCases.dateDifference > 21 ? `(Highest since ${moment(lastDayMoreCases.date).format('dddd, Do MMMM')} - ${lastDayMoreCases.sevenDayAveragePcr})`: '') +
+                (lastDayMoreCases.dateDifference > 14 ? `\nHighest since ${moment(lastDayMoreCases.date).format('dddd, Do MMMM')} - ${(Number(lastDayLessCases.sevenDayAveragePcr) + Number(lastDayLessCases.sevenDayAverageAntigen)).toFixed(2)}`: '') +
                 `\n${moment(graphData[graphData.length - 8].date).format('dddd, Do MMMM')}: ${previousDaysCases.string}${previousDaysCasesDifference.toString}` +
                 `\n${moment(graphData[graphData.length - 15].date).format('dddd, Do MMMM')}: ${previousWeeksCases.string}${previousWeeksCasesDifference.toString}`;
     
